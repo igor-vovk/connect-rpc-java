@@ -3,55 +3,71 @@ package me.ivovk.connect_rpc_java.core.grpc;
 import io.grpc.*;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
+import me.ivovk.connect_rpc_java.core.Configurer;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.function.Function;
+import java.util.concurrent.TimeUnit;
 
 public class InProcessChannelBridge {
 
-    static Channel create(
-            List<ServerServiceDefinition> services,
-            Function<ServerBuilder<?>, ServerBuilder<?>> serverConfigurator,
-            Executor executor
-    ) {
-        String name = InProcessServerBuilder.generateName();
+  record ChannelContext(
+      ManagedChannel channel,
+      Server server,
+      Duration awaitTerminationTimeout
+  ) {
+    public void shutdown() throws InterruptedException {
+      server.shutdown();
+      channel.shutdown();
 
-        Server server = createServer(name, services, serverConfigurator, executor);
-        ManagedChannel channel = createChannel(name, Function.identity());
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            server.shutdown();
-            channel.shutdown();
-        }));
-
-        return channel;
+      server.awaitTermination(awaitTerminationTimeout.getSeconds(), TimeUnit.SECONDS);
+      channel.awaitTermination(awaitTerminationTimeout.getSeconds(), TimeUnit.SECONDS);
     }
+  }
 
-    static Server createServer(
-            String name,
-            List<ServerServiceDefinition> services,
-            Function<ServerBuilder<?>, ServerBuilder<?>> serverConfigurator,
-            Executor executor
-    ) {
-        ServerBuilder<?> builder = InProcessServerBuilder.forName(name)
-                .addServices(services)
-                .executor(executor);
+  /**
+   * Remember to call shutdown() on the returned ChannelContext
+   */
+  static ChannelContext create(
+      List<ServerServiceDefinition> services,
+      Configurer<ServerBuilder<?>> serverBuilderConfigurer,
+      Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer,
+      Executor executor,
+      Duration awaitTerminationTimeout
+  ) {
+    String name = InProcessServerBuilder.generateName();
 
-        builder = serverConfigurator.apply(builder);
+    Server server = createServer(name, services, serverBuilderConfigurer, executor);
+    ManagedChannel channel = createChannel(name, channelBuilderConfigurer);
 
-        return builder.build();
-    }
+    return new ChannelContext(channel, server, awaitTerminationTimeout);
+  }
 
-    static ManagedChannel createChannel(
-            String name,
-            Function<ManagedChannelBuilder<?>, ManagedChannelBuilder<?>> channelConfigurator
-    ) {
-        ManagedChannelBuilder<?> builder = InProcessChannelBuilder.forName(name);
+  private static Server createServer(
+      String name,
+      List<ServerServiceDefinition> services,
+      Configurer<ServerBuilder<?>> serverBuilderConfigurer,
+      Executor executor
+  ) {
+    ServerBuilder<?> builder = InProcessServerBuilder.forName(name)
+        .addServices(services)
+        .executor(executor);
 
-        builder = channelConfigurator.apply(builder);
+    builder = serverBuilderConfigurer.configure(builder);
 
-        return builder.build();
-    }
+    return builder.build();
+  }
+
+  private static ManagedChannel createChannel(
+      String name,
+      Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer
+  ) {
+    ManagedChannelBuilder<?> builder = InProcessChannelBuilder.forName(name);
+
+    builder = channelBuilderConfigurer.configure(builder);
+
+    return builder.build();
+  }
 
 }
