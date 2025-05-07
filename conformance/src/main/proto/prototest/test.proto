@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package prototest;
+
+option java_package = "com.google.protobuf.conformance.prototest";
+
+message TestMessage {
+  string name = 1;
+  int32 id = 2;
+  repeated string tags = 3;
+}
+
+service TestService {
+  rpc GetTestMessage (TestMessage) returns (TestMessage);
+  rpc ListTestMessages (TestMessage) returns (stream TestMessage);
+}

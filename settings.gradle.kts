@@ -10,3 +10,6 @@ plugins {
 
 rootProject.name = "connect-rpc-java"
 include("core")
+include("netty")
+
+include("conformance")

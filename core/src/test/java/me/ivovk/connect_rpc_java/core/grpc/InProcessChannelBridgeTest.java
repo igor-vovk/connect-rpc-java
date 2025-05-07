@@ -28,8 +28,9 @@ class InProcessChannelBridgeTest {
     // Assert: Server and channel are running
     Server server = context.server();
     ManagedChannel channel = context.channel();
-    assertFalse(server.isShutdown(), "Server should be running initially");
-    assertFalse(channel.isShutdown(), "Channel should be running initially");
+
+    assertFalse(context.isShutdown(), "Context should be running initially");
+    assertFalse(context.isTerminated(), "Server should be running initially");
 
     // Act: Shutdown
     context.shutdown();
@@ -37,7 +38,11 @@ class InProcessChannelBridgeTest {
     // Assert: Both server and channel are terminated
     assertTrue(server.isShutdown(), "Server should be shutdown");
     assertTrue(channel.isShutdown(), "Channel should be shutdown");
+    assertTrue(context.isShutdown(), "Context should be shutdown");
+
+    // Assert: Both server and channel are terminated
     assertTrue(server.isTerminated(), "Server should be terminated");
     assertTrue(channel.isTerminated(), "Channel should be terminated");
+    assertTrue(context.isTerminated(), "Context should be terminated");
   }
 }

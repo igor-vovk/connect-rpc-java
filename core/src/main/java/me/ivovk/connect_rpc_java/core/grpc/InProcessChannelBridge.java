@@ -12,39 +12,47 @@ import java.util.concurrent.TimeUnit;
 
 public class InProcessChannelBridge {
 
-  record ChannelContext(
+  public record ChannelContext(
       ManagedChannel channel,
       Server server,
-      Duration awaitTerminationTimeout
+      Duration terminationTimeout
   ) {
     public void shutdown() throws InterruptedException {
       server.shutdown();
       channel.shutdown();
 
-      server.awaitTermination(awaitTerminationTimeout.getSeconds(), TimeUnit.SECONDS);
-      channel.awaitTermination(awaitTerminationTimeout.getSeconds(), TimeUnit.SECONDS);
+      server.awaitTermination(terminationTimeout.getSeconds(), TimeUnit.SECONDS);
+      channel.awaitTermination(terminationTimeout.getSeconds(), TimeUnit.SECONDS);
+    }
+
+    public boolean isShutdown() {
+      return server.isShutdown() && channel.isShutdown();
+    }
+
+    public boolean isTerminated() {
+      return server.isTerminated() && channel.isTerminated();
     }
   }
 
   /**
    * Remember to call shutdown() on the returned ChannelContext
    */
-  static ChannelContext create(
+  public static ChannelContext create(
       List<ServerServiceDefinition> services,
       Configurer<ServerBuilder<?>> serverBuilderConfigurer,
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer,
       Executor executor,
       Duration awaitTerminationTimeout
   ) {
-    String name = InProcessServerBuilder.generateName();
+    var name = InProcessServerBuilder.generateName();
 
-    Server server = createServer(name, services, serverBuilderConfigurer, executor);
-    ManagedChannel channel = createChannel(name, channelBuilderConfigurer);
+    var server = createServer(name, services, serverBuilderConfigurer, executor);
+    var channel = createChannel(name, channelBuilderConfigurer);
 
     return new ChannelContext(channel, server, awaitTerminationTimeout);
   }
 
-  private static Server createServer(
+  static Server createServer(
       String name,
       List<ServerServiceDefinition> services,
       Configurer<ServerBuilder<?>> serverBuilderConfigurer,
@@ -59,7 +67,7 @@ public class InProcessChannelBridge {
     return builder.build();
   }
 
-  private static ManagedChannel createChannel(
+  static ManagedChannel createChannel(
       String name,
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer
   ) {

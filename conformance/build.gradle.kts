@@ -6,15 +6,7 @@ plugins {
 }
 
 repositories {
-    gradlePluginPortal()
     mavenCentral()
-    google()
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
 }
 
 protobuf {
@@ -32,7 +24,7 @@ protobuf {
     }
 
     generateProtoTasks {
-        ofSourceSet("test").forEach {
+        ofSourceSet("main").forEach {
             it.plugins {
                 // Apply the "grpc" plugin whose spec is defined above, without
                 // options. Note the braces cannot be omitted, otherwise the
@@ -45,19 +37,16 @@ protobuf {
 }
 
 dependencies {
+    api(project(":netty"))
     implementation(libs.grpc.core)
+    implementation(libs.grpc.stub)
     implementation(libs.grpc.protobuf)
-    implementation(libs.grpc.inprocess)
-    implementation(libs.logback)
-    implementation(libs.protobuf.util)
-    testImplementation(libs.junit)
-    testImplementation(libs.grpc.stub)
-    testImplementation(libs.grpc.common.protos)
-    //testProtobuf(libs.grpc.common.protos)
-    testImplementation(libs.javax.annotation)
+    implementation(libs.javax.annotation)
+
+    testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
 }
 
-tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
+tasks.test {
     useJUnitPlatform()
 }

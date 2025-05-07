@@ -23,3 +23,5 @@ target/
 
 # Ignore Gradle build output directory
 build
+
+.github/copilot-instructions.md
