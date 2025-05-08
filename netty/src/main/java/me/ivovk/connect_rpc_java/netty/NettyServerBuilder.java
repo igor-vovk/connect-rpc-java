@@ -157,7 +157,6 @@ public class NettyServerBuilder {
         .group(bossGroup, workerGroup)
         .channel(NioServerSocketChannel.class)
         .childHandler(new ChannelInitializer<SocketChannel>() {
-
           @Override
           protected void initChannel(SocketChannel ch) {
             var pipeline = ch.pipeline();
@@ -179,6 +178,18 @@ public class NettyServerBuilder {
 
     var channel = bootstrap.bind(host, port).sync().channel();
 
-    return new NettyServer((InetSocketAddress) channel.localAddress(), null);
+    Runnable shutdown = () -> {
+      try {
+        channel.close().sync();
+        bossGroup.shutdownGracefully();
+        workerGroup.shutdownGracefully();
+        inProcessChannel.shutdown();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.error("Error shutting down server", e);
+      }
+    };
+
+    return new NettyServer((InetSocketAddress) channel.localAddress(), shutdown);
   }
 }

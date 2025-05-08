@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.grpc.core)
     implementation(libs.grpc.stub)
     implementation(libs.grpc.protobuf)
+    implementation(libs.slf4j.api)
     implementation(libs.javax.annotation)
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))

@@ -32,7 +32,7 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
         logger.trace(">>> Headers: {}", req.headers());
       }
 
-      ctx.writeAndFlush("hello");
+      ctx.writeAndFlush("200 OK");
     }
   }
 
