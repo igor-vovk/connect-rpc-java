@@ -1,6 +1,5 @@
 package org.example;
 
-
 import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,20 +10,22 @@ public class Main {
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
   public static void main(String[] args) throws Exception {
-    var server = NettyServerBuilder
-        .forServices(List.of())
-        .setPort(8080)
-        .build();
+    var builder = NettyServerBuilder.forServices(List.of()).setPort(8080);
 
-    logger.info("Server started on port {}", server.getPort());
+    try (var server = builder.build()) {
+      logger.info("Server started on port {}", server.getPort());
 
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      try {
-        server.shutdown();
-        logger.info("Server shut down");
-      } catch (Exception e) {
-        logger.error("Error shutting down server", e);
-      }
-    }));
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    try {
+                      server.shutdown();
+                      logger.info("Server shut down");
+                    } catch (Exception e) {
+                      logger.error("Error shutting down server", e);
+                    }
+                  }));
+    }
   }
 }

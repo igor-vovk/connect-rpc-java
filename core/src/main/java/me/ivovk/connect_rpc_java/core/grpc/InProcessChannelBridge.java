@@ -12,11 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 public class InProcessChannelBridge {
 
-  public record ChannelContext(
-      ManagedChannel channel,
-      Server server,
-      Duration terminationTimeout
-  ) {
+  public record ChannelContext(ManagedChannel channel, Server server, Duration terminationTimeout) {
     public void shutdown() throws InterruptedException {
       server.shutdown();
       channel.shutdown();
@@ -34,16 +30,13 @@ public class InProcessChannelBridge {
     }
   }
 
-  /**
-   * Remember to call shutdown() on the returned ChannelContext
-   */
+  /** Remember to call shutdown() on the returned ChannelContext */
   public static ChannelContext create(
       List<ServerServiceDefinition> services,
       Configurer<ServerBuilder<?>> serverBuilderConfigurer,
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer,
       Executor executor,
-      Duration awaitTerminationTimeout
-  ) {
+      Duration awaitTerminationTimeout) {
     var name = InProcessServerBuilder.generateName();
 
     var server = createServer(name, services, serverBuilderConfigurer, executor);
@@ -56,11 +49,9 @@ public class InProcessChannelBridge {
       String name,
       List<ServerServiceDefinition> services,
       Configurer<ServerBuilder<?>> serverBuilderConfigurer,
-      Executor executor
-  ) {
-    ServerBuilder<?> builder = InProcessServerBuilder.forName(name)
-        .addServices(services)
-        .executor(executor);
+      Executor executor) {
+    ServerBuilder<?> builder =
+        InProcessServerBuilder.forName(name).addServices(services).executor(executor);
 
     builder = serverBuilderConfigurer.configure(builder);
 
@@ -68,14 +59,11 @@ public class InProcessChannelBridge {
   }
 
   static ManagedChannel createChannel(
-      String name,
-      Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer
-  ) {
+      String name, Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer) {
     ManagedChannelBuilder<?> builder = InProcessChannelBuilder.forName(name);
 
     builder = channelBuilderConfigurer.configure(builder);
 
     return builder.build();
   }
-
 }

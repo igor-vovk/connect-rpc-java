@@ -8,7 +8,6 @@ import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 
 import java.util.function.Predicate;
 
-
 public class NettyHeaderMapping implements HeaderMapping<HttpHeaders> {
 
   private final Predicate<String> headersFilter;
@@ -18,8 +17,7 @@ public class NettyHeaderMapping implements HeaderMapping<HttpHeaders> {
   public NettyHeaderMapping(
       Predicate<String> headersFilter,
       Predicate<String> metadataFilter,
-      Boolean treatTrailersAsHeaders
-  ) {
+      Boolean treatTrailersAsHeaders) {
     this.headersFilter = headersFilter;
     this.metadataFilter = metadataFilter;
     this.treatTrailersAsHeaders = treatTrailersAsHeaders;

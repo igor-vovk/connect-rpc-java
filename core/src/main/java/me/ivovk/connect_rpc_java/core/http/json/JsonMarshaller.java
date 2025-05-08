@@ -13,34 +13,33 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 /**
- * <a href="https://github.com/grpc/grpc-java/blob/master/examples/src/main/java/io/grpc/examples/advanced/JsonMarshaller.java">source</a>
+ * <a
+ * href="https://github.com/grpc/grpc-java/blob/master/examples/src/main/java/io/grpc/examples/advanced/JsonMarshaller.java">source</a>
  */
 public class JsonMarshaller {
 
-  final static Charset charset = StandardCharsets.UTF_8;
+  static final Charset charset = StandardCharsets.UTF_8;
 
-  private JsonMarshaller() {
-  }
+  private JsonMarshaller() {}
 
   public static <T extends Message> Marshaller<T> jsonMarshaller(final T defaultInstance) {
-    final Parser parser = JsonFormat.parser();
-    final Printer printer = JsonFormat.printer();
+    var parser = JsonFormat.parser();
+    var printer = JsonFormat.printer();
 
     return jsonMarshaller(defaultInstance, parser, printer);
   }
 
   public static <T extends Message> Marshaller<T> jsonMarshaller(
-      final T defaultInstance,
-      final Parser parser,
-      final Printer printer
-  ) {
+      final T defaultInstance, final Parser parser, final Printer printer) {
     return new Marshaller<>() {
       @Override
       public InputStream stream(T value) {
         try {
           return new ByteArrayInputStream(printer.print(value).getBytes(charset));
         } catch (InvalidProtocolBufferException e) {
-          throw Status.INTERNAL.withDescription("Unable to print json proto").withCause(e)
+          throw Status.INTERNAL
+              .withDescription("Unable to print json proto")
+              .withCause(e)
               .asRuntimeException();
         }
       }
@@ -48,18 +47,19 @@ public class JsonMarshaller {
       @SuppressWarnings("unchecked")
       @Override
       public T parse(InputStream stream) {
-        Message.Builder builder = defaultInstance.newBuilderForType();
+        var builder = defaultInstance.newBuilderForType();
 
-        try (Reader reader = new InputStreamReader(stream, charset)) {
+        try (var reader = new InputStreamReader(stream, charset)) {
           parser.merge(reader, builder);
 
           return (T) builder.build();
         } catch (IOException e) {
-          throw Status.INTERNAL.withDescription("Unable to parse json").withCause(e)
+          throw Status.INTERNAL
+              .withDescription("Unable to parse json")
+              .withCause(e)
               .asRuntimeException();
         }
       }
     };
   }
-
 }

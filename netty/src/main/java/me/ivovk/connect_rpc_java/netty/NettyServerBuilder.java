@@ -21,6 +21,7 @@ import me.ivovk.connect_rpc_java.core.Configurer;
 import me.ivovk.connect_rpc_java.core.grpc.InProcessChannelBridge;
 import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
+import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +34,10 @@ import java.util.function.Predicate;
 
 public class NettyServerBuilder {
 
-  private final static Logger logger = LoggerFactory.getLogger(NettyServerBuilder.class);
+  private static final Logger logger = LoggerFactory.getLogger(NettyServerBuilder.class);
 
-  private final static String DEFAULT_HOST = "0.0.0.0";
-  private final static int DEFAULT_PORT = 0;
+  private static final String DEFAULT_HOST = "0.0.0.0";
+  private static final int DEFAULT_PORT = 0;
 
   private List<ServerServiceDefinition> services;
   private Configurer<ServerBuilder<?>> serverBuilderConfigurer = Configurer.noop();
@@ -50,18 +51,13 @@ public class NettyServerBuilder {
   private String host = DEFAULT_HOST;
   private int port = DEFAULT_PORT;
 
-  private NettyServerBuilder() {
-  }
+  private NettyServerBuilder() {}
 
-  public static NettyServerBuilder forService(
-      ServerServiceDefinition service
-  ) {
+  public static NettyServerBuilder forService(ServerServiceDefinition service) {
     return forServices(List.of(service));
   }
 
-  public static NettyServerBuilder forServices(
-      List<ServerServiceDefinition> services
-  ) {
+  public static NettyServerBuilder forServices(List<ServerServiceDefinition> services) {
     NettyServerBuilder builder = new NettyServerBuilder();
     builder.services = services;
 
@@ -69,16 +65,14 @@ public class NettyServerBuilder {
   }
 
   public NettyServerBuilder setServerBuilderConfigurer(
-      Configurer<ServerBuilder<?>> serverBuilderConfigurer
-  ) {
+      Configurer<ServerBuilder<?>> serverBuilderConfigurer) {
     this.serverBuilderConfigurer = serverBuilderConfigurer;
 
     return this;
   }
 
   public NettyServerBuilder setChannelBuilderConfigurer(
-      Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer
-  ) {
+      Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer) {
     this.channelBuilderConfigurer = channelBuilderConfigurer;
 
     return this;
@@ -133,62 +127,67 @@ public class NettyServerBuilder {
   }
 
   public NettyServer build() throws InterruptedException {
-    var inProcessChannel = InProcessChannelBridge.create(
-        services,
-        serverBuilderConfigurer,
-        channelBuilderConfigurer,
-        executor,
-        terminationTimeout
-    );
+    var channelContext =
+        InProcessChannelBridge.create(
+            services,
+            serverBuilderConfigurer,
+            channelBuilderConfigurer,
+            executor,
+            terminationTimeout);
 
     var methodRegistry = MethodRegistry.create(services);
 
-    var headerMapping = new NettyHeaderMapping(
-        incomingHeadersFilter,
-        outgoingHeadersFilter,
-        treatTrailersAsHeaders
-    );
+    var headerMapping =
+        new NettyHeaderMapping(
+            incomingHeadersFilter, outgoingHeadersFilter, treatTrailersAsHeaders);
+
+    var connectHandler = new ConnectHandler(channelContext.channel(), headerMapping);
 
     var ioHandlerFactory = NioIoHandler.newFactory();
     var bossGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
     var workerGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
 
-    var bootstrap = new ServerBootstrap()
-        .group(bossGroup, workerGroup)
-        .channel(NioServerSocketChannel.class)
-        .childHandler(new ChannelInitializer<SocketChannel>() {
-          @Override
-          protected void initChannel(SocketChannel ch) {
-            var pipeline = ch.pipeline();
+    var bootstrap =
+        new ServerBootstrap()
+            .group(bossGroup, workerGroup)
+            .channel(NioServerSocketChannel.class)
+            .childHandler(
+                new ChannelInitializer<SocketChannel>() {
+                  @Override
+                  protected void initChannel(SocketChannel ch) {
+                    var pipeline = ch.pipeline();
 
-            if (enableLogging) {
-              pipeline.addLast("logging", new LoggingHandler(LogLevel.INFO));
-            }
+                    if (enableLogging) {
+                      pipeline.addLast("logging", new LoggingHandler(LogLevel.INFO));
+                    }
 
-            pipeline
-                .addLast("serverCodec", new HttpServerCodec())
-                .addLast("keepAlive", new HttpServerKeepAliveHandler())
-                .addLast("aggregator", new HttpObjectAggregator(1024 * 1024))
-                .addLast("idleStateHandler", new IdleStateHandler(60, 30, 0))
-                .addLast("readTimeoutHandler", new ReadTimeoutHandler(30))
-                .addLast("writeTimeoutHandler", new WriteTimeoutHandler(30))
-                .addLast("handler", new HttpServerHandler(methodRegistry, headerMapping));
-          }
-        });
+                    pipeline
+                        .addLast("serverCodec", new HttpServerCodec())
+                        .addLast("keepAlive", new HttpServerKeepAliveHandler())
+                        .addLast("aggregator", new HttpObjectAggregator(1024 * 1024))
+                        .addLast("idleStateHandler", new IdleStateHandler(60, 30, 0))
+                        .addLast("readTimeoutHandler", new ReadTimeoutHandler(30))
+                        .addLast("writeTimeoutHandler", new WriteTimeoutHandler(30))
+                        .addLast(
+                            "handler",
+                            new HttpServerHandler(methodRegistry, connectHandler, headerMapping));
+                  }
+                });
 
     var channel = bootstrap.bind(host, port).sync().channel();
 
-    Runnable shutdown = () -> {
-      try {
-        channel.close().sync();
-        bossGroup.shutdownGracefully();
-        workerGroup.shutdownGracefully();
-        inProcessChannel.shutdown();
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        logger.error("Error shutting down server", e);
-      }
-    };
+    Runnable shutdown =
+        () -> {
+          try {
+            channel.close().sync();
+            bossGroup.shutdownGracefully();
+            workerGroup.shutdownGracefully();
+            channelContext.shutdown();
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            logger.error("Error shutting down server", e);
+          }
+        };
 
     return new NettyServer((InetSocketAddress) channel.localAddress(), shutdown);
   }

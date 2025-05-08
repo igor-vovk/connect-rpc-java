@@ -1,43 +1,14 @@
 import com.google.protobuf.gradle.*
 
 plugins {
-    `java-library`
-    id("com.google.protobuf") version "0.9.5"
-}
-
-repositories {
-    gradlePluginPortal()
-    mavenCentral()
-    google()
-}
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    id("connect.library-conventions")
+    id("connect.protobuf-conventions")
 }
 
 protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:3.25.5"
-    }
-
-    plugins {
-        // Optional: an artifact spec for a protoc plugin, with "grpc" as
-        // the identifier, which can be referred to in the "plugins"
-        // container of the "generateProtoTasks" closure.
-        id("grpc") {
-            artifact = "io.grpc:protoc-gen-grpc-java:1.72.0"
-        }
-    }
-
     generateProtoTasks {
         ofSourceSet("test").forEach {
             it.plugins {
-                // Apply the "grpc" plugin whose spec is defined above, without
-                // options. Note the braces cannot be omitted, otherwise the
-                // plugin will not be added. This is because of the implicit way
-                // NamedDomainObjectContainer binds the methods.
                 id("grpc") { }
             }
         }
@@ -50,14 +21,7 @@ dependencies {
     implementation(libs.grpc.inprocess)
     implementation(libs.logback)
     implementation(libs.protobuf.util)
-    testImplementation(libs.junit)
     testImplementation(libs.grpc.stub)
     testImplementation(libs.grpc.common.protos)
-    //testProtobuf(libs.grpc.common.protos)
     testImplementation(libs.javax.annotation)
-}
-
-tasks.named<Test>("test") {
-    // Use JUnit Platform for unit tests.
-    useJUnitPlatform()
 }

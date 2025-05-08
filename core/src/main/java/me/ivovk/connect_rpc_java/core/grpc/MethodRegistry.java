@@ -1,11 +1,8 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
 import com.google.api.AnnotationsProto;
-import com.google.api.Http;
-import com.google.api.HttpProto;
 import com.google.api.HttpRule;
 import com.google.protobuf.GeneratedMessageV3;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServerMethodDefinition;
 import io.grpc.ServerServiceDefinition;
@@ -21,42 +18,36 @@ public class MethodRegistry {
   public record Entry(
       MethodName methodName,
       MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptor,
-      Optional<HttpRule> httpRule
-  ) {
-  }
+      Optional<HttpRule> httpRule) {}
 
   private final List<Entry> entries;
-  private Map<String, Map<String, Entry>> byServiceAndMethod;
+  private final Map<String, Map<String, Entry>> byServiceAndMethod;
 
   private MethodRegistry(List<Entry> entries) {
     this.entries = entries;
-    this.byServiceAndMethod = entries.stream()
-        .collect(
-            Collectors.groupingBy(
-                entry -> entry.methodName.service(),
-                Collectors.toMap(
-                    entry -> entry.methodName.method(),
-                    entry -> entry
-                )
-            )
-        );
+    this.byServiceAndMethod =
+        entries.stream()
+            .collect(
+                Collectors.groupingBy(
+                    entry -> entry.methodName.service(),
+                    Collectors.toMap(entry -> entry.methodName.method(), entry -> entry)));
   }
 
   public static MethodRegistry create(List<ServerServiceDefinition> services) {
-    var entries = services.stream()
-        .flatMap(s -> s.getMethods().stream())
-        .map(smd -> {
-          var descriptor = ((ServerMethodDefinition<GeneratedMessageV3, GeneratedMessageV3>) smd).getMethodDescriptor();
-          var methodName = new MethodName(descriptor.getServiceName(), descriptor.getBareMethodName());
+    var entries =
+        services.stream()
+            .flatMap(s -> s.getMethods().stream())
+            .map(
+                smd -> {
+                  var descriptor =
+                      ((ServerMethodDefinition<GeneratedMessageV3, GeneratedMessageV3>) smd)
+                          .getMethodDescriptor();
+                  var methodName =
+                      new MethodName(descriptor.getServiceName(), descriptor.getBareMethodName());
 
-          return new Entry(
-              methodName,
-              descriptor,
-              extractHttpRule(descriptor)
-          );
-        })
-        .toList();
-
+                  return new Entry(methodName, descriptor, extractHttpRule(descriptor));
+                })
+            .toList();
 
     return new MethodRegistry(entries);
   }
@@ -92,5 +83,4 @@ public class MethodRegistry {
 
     return Optional.ofNullable(methods.get(method));
   }
-
 }
