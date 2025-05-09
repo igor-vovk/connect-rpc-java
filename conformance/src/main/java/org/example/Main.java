@@ -10,7 +10,7 @@ public class Main {
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
   public static void main(String[] args) throws Exception {
-    var builder = NettyServerBuilder.forServices(List.of()).setPort(8080);
+    var builder = NettyServerBuilder.forServices(List.of()).port(8080);
 
     try (var server = builder.build()) {
       logger.info("Server started on port {}", server.getPort());

@@ -21,6 +21,7 @@ import me.ivovk.connect_rpc_java.core.Configurer;
 import me.ivovk.connect_rpc_java.core.grpc.InProcessChannelBridge;
 import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
+import me.ivovk.connect_rpc_java.core.http.Paths;
 import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +45,7 @@ public class NettyServerBuilder {
   private Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer = Configurer.noop();
   private Predicate<String> incomingHeadersFilter = HeaderMapping.DEFAULT_INCOMING_HEADERS_FILTER;
   private Predicate<String> outgoingHeadersFilter = HeaderMapping.DEFAULT_OUTGOING_HEADERS_FILTER;
+  private Paths.Path pathPrefix = Paths.Path.ROOT_PATH;
   private Executor executor = Executors.newCachedThreadPool();
   private Duration terminationTimeout = Duration.ofSeconds(5);
   private boolean treatTrailersAsHeaders = true;
@@ -64,63 +66,69 @@ public class NettyServerBuilder {
     return builder;
   }
 
-  public NettyServerBuilder setServerBuilderConfigurer(
+  public NettyServerBuilder serverBuilderConfigurer(
       Configurer<ServerBuilder<?>> serverBuilderConfigurer) {
     this.serverBuilderConfigurer = serverBuilderConfigurer;
 
     return this;
   }
 
-  public NettyServerBuilder setChannelBuilderConfigurer(
+  public NettyServerBuilder channelBuilderConfigurer(
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer) {
     this.channelBuilderConfigurer = channelBuilderConfigurer;
 
     return this;
   }
 
-  public NettyServerBuilder setIncomingHeadersFilter(Predicate<String> incomingHeadersFilter) {
+  public NettyServerBuilder incomingHeadersFilter(Predicate<String> incomingHeadersFilter) {
     this.incomingHeadersFilter = incomingHeadersFilter;
 
     return this;
   }
 
-  public NettyServerBuilder setOutgoingHeadersFilter(Predicate<String> outgoingHeadersFilter) {
+  public NettyServerBuilder outgoingHeadersFilter(Predicate<String> outgoingHeadersFilter) {
     this.outgoingHeadersFilter = outgoingHeadersFilter;
 
     return this;
   }
 
-  public NettyServerBuilder setExecutor(Executor executor) {
+  public NettyServerBuilder pathPrefix(Paths.Path pathPrefix) {
+    this.pathPrefix = pathPrefix;
+
+    return this;
+  }
+
+  public NettyServerBuilder executor(Executor executor) {
     this.executor = executor;
 
     return this;
   }
 
-  public NettyServerBuilder setTerminationTimeout(Duration terminationTimeout) {
+  public NettyServerBuilder terminationTimeout(Duration terminationTimeout) {
     this.terminationTimeout = terminationTimeout;
 
     return this;
   }
 
-  public NettyServerBuilder setTreatTrailersAsHeaders(boolean treatTrailersAsHeaders) {
+  public NettyServerBuilder treatTrailersAsHeaders(boolean treatTrailersAsHeaders) {
     this.treatTrailersAsHeaders = treatTrailersAsHeaders;
 
     return this;
   }
 
-  public NettyServerBuilder setEnableLogging(boolean enableLogging) {
+  public NettyServerBuilder enableLogging(boolean enableLogging) {
     this.enableLogging = enableLogging;
 
     return this;
   }
 
-  public NettyServerBuilder setHost(String host) {
+  public NettyServerBuilder host(String host) {
     this.host = host;
 
     return this;
   }
 
-  public NettyServerBuilder setPort(int port) {
+  public NettyServerBuilder port(int port) {
     this.port = port;
 
     return this;
@@ -170,7 +178,8 @@ public class NettyServerBuilder {
                         .addLast("writeTimeoutHandler", new WriteTimeoutHandler(30))
                         .addLast(
                             "handler",
-                            new HttpServerHandler(methodRegistry, connectHandler, headerMapping));
+                            new HttpServerHandler(
+                                methodRegistry, connectHandler, headerMapping, pathPrefix));
                   }
                 });
 

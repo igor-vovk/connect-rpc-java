@@ -1,12 +1,14 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
+import static me.ivovk.connect_rpc_java.core.http.json.JsonMarshaller.jsonMarshaller;
+
 import com.google.api.AnnotationsProto;
 import com.google.api.HttpRule;
 import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.MethodDescriptor;
-import io.grpc.ServerMethodDefinition;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
+import me.ivovk.connect_rpc_java.core.http.MediaTypes;
 
 import java.util.List;
 import java.util.Map;
@@ -18,7 +20,20 @@ public class MethodRegistry {
   public record Entry(
       MethodName methodName,
       MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptor,
-      Optional<HttpRule> httpRule) {}
+      MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> jsonDescriptor,
+      Optional<HttpRule> httpRule) {
+
+    public MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptorByMediaType(
+        MediaTypes.MediaType mediaType) {
+      if (mediaType.equals(MediaTypes.APPLICATION_JSON)) {
+        return jsonDescriptor;
+      } else if (mediaType.equals(MediaTypes.APPLICATION_PROTO)) {
+        return descriptor;
+      } else {
+        throw new IllegalArgumentException("Unsupported media type: " + mediaType);
+      }
+    }
+  }
 
   private final List<Entry> entries;
   private final Map<String, Map<String, Entry>> byServiceAndMethod;
@@ -39,13 +54,26 @@ public class MethodRegistry {
             .flatMap(s -> s.getMethods().stream())
             .map(
                 smd -> {
+                  @SuppressWarnings("unchecked")
                   var descriptor =
-                      ((ServerMethodDefinition<GeneratedMessageV3, GeneratedMessageV3>) smd)
-                          .getMethodDescriptor();
+                      (MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3>)
+                          smd.getMethodDescriptor();
+
                   var methodName =
                       new MethodName(descriptor.getServiceName(), descriptor.getBareMethodName());
 
-                  return new Entry(methodName, descriptor, extractHttpRule(descriptor));
+                  var jsonDescriptor =
+                      descriptor.toBuilder()
+                          .setRequestMarshaller(
+                              jsonMarshaller(
+                                  getMessagePrototype(descriptor.getRequestMarshaller())))
+                          .setResponseMarshaller(
+                              jsonMarshaller(
+                                  getMessagePrototype(descriptor.getResponseMarshaller())))
+                          .build();
+
+                  return new Entry(
+                      methodName, descriptor, jsonDescriptor, extractHttpRule(descriptor));
                 })
             .toList();
 
@@ -69,6 +97,14 @@ public class MethodRegistry {
     }
 
     return Optional.empty();
+  }
+
+  protected static <T> T getMessagePrototype(MethodDescriptor.Marshaller<T> marshaller) {
+    if (marshaller instanceof MethodDescriptor.PrototypeMarshaller<T> prototypeMarshaller) {
+      return prototypeMarshaller.getMessagePrototype();
+    } else {
+      throw new IllegalArgumentException("Marshaller is not a PrototypeMarshaller");
+    }
   }
 
   public List<Entry> all() {

@@ -1,6 +1,5 @@
 package me.ivovk.connect_rpc_java.netty.connect;
 
-import com.google.protobuf.GeneratedMessageV3;
 import io.grpc.CallOptions;
 import io.grpc.Channel;
 import io.grpc.Status;
@@ -10,7 +9,7 @@ import me.ivovk.connect_rpc_java.core.grpc.ClientCalls;
 import me.ivovk.connect_rpc_java.core.grpc.GrpcHeaders;
 import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
-import me.ivovk.connect_rpc_java.netty.Request;
+import me.ivovk.connect_rpc_java.netty.RequestEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +28,8 @@ public class ConnectHandler {
     this.headerMapping = headerMapping;
   }
 
-  public CompletableFuture<HttpResponse> handle(Request request, MethodRegistry.Entry method) {
+  public CompletableFuture<HttpResponse> handle(
+      RequestEntity request, MethodRegistry.Entry method) {
     switch (method.descriptor().getType()) {
       case UNARY:
         return handleUnary(request, method);
@@ -43,16 +43,16 @@ public class ConnectHandler {
   }
 
   private CompletableFuture<HttpResponse> handleUnary(
-      Request request, MethodRegistry.Entry method) {
+      RequestEntity request, MethodRegistry.Entry method) {
     if (logger.isTraceEnabled()) {
       // Used in conformance tests
       Optional.ofNullable(request.headers().get((GrpcHeaders.X_TEST_CASE_NAME)))
           .ifPresent(caseName -> logger.trace(">>> Test Case name: {}", caseName));
     }
 
-    GeneratedMessageV3 requestMessage = null;
     var call = channel.newCall(method.descriptor(), CallOptions.DEFAULT);
-    var response = ClientCalls.completableFutureUnaryCall(call, request.headers(), requestMessage);
+    var response =
+        ClientCalls.completableFutureUnaryCall(call, request.headers(), request.message());
 
     return null;
   }
