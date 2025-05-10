@@ -23,7 +23,17 @@ public class MethodRegistry {
       MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> jsonDescriptor,
       Optional<HttpRule> httpRule) {
 
-    public MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptorByMediaType(
+    public MethodDescriptor.Marshaller<GeneratedMessageV3> requestMarshaller(
+        MediaTypes.MediaType mediaType) {
+      return descriptorByMediaType(mediaType).getRequestMarshaller();
+    }
+
+    public MethodDescriptor.Marshaller<GeneratedMessageV3> responseMarshaller(
+        MediaTypes.MediaType mediaType) {
+      return descriptorByMediaType(mediaType).getResponseMarshaller();
+    }
+
+    private MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptorByMediaType(
         MediaTypes.MediaType mediaType) {
       if (mediaType.equals(MediaTypes.APPLICATION_JSON)) {
         return jsonDescriptor;

@@ -1,5 +1,6 @@
 package me.ivovk.connect_rpc_java.netty;
 
+import io.grpc.BindableService;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.ServerBuilder;
 import io.grpc.ServerServiceDefinition;
@@ -32,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class NettyServerBuilder {
 
@@ -55,11 +57,17 @@ public class NettyServerBuilder {
 
   private NettyServerBuilder() {}
 
-  public static NettyServerBuilder forService(ServerServiceDefinition service) {
-    return forServices(List.of(service));
+  public static NettyServerBuilder forServices(BindableService... services) {
+    var serverServiceDefinitions = Stream.of(services).map(BindableService::bindService).toList();
+
+    return forServices(serverServiceDefinitions);
   }
 
-  public static NettyServerBuilder forServices(List<ServerServiceDefinition> services) {
+  public static NettyServerBuilder forServices(ServerServiceDefinition... services) {
+    return forServices(List.of(services));
+  }
+
+  private static NettyServerBuilder forServices(List<ServerServiceDefinition> services) {
     NettyServerBuilder builder = new NettyServerBuilder();
     builder.services = services;
 

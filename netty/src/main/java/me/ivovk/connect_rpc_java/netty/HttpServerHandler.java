@@ -86,13 +86,13 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
         return;
       }
 
-      var marshaller = grpcMethod.descriptorByMediaType(mediaType).getRequestMarshaller();
+      var requestMarshaller = grpcMethod.requestMarshaller(mediaType);
 
-      var request = marshaller.parse(new ByteBufInputStream(req.content()));
+      var requestMessage = requestMarshaller.parse(new ByteBufInputStream(req.content()));
 
       var responseFuture =
           connectHandler.handle(
-              new RequestEntity(headerMapping.toMetadata(req.headers()), mediaType, request),
+              new RequestEntity(headerMapping.toMetadata(req.headers()), mediaType, requestMessage),
               grpcMethod);
 
       responseFuture.whenComplete(

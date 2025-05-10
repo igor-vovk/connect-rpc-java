@@ -6,9 +6,9 @@ import java.util.concurrent.CompletableFuture;
 
 public class ClientCalls {
 
-  public record Response<T>(T message, Metadata headers, Metadata trailers) {}
+  public record Response<T>(T message, Metadata headerMetadata, Metadata trailerMetadata) {}
 
-  public static <ReqT, RespT> CompletableFuture<Response<RespT>> completableFutureUnaryCall(
+  public static <ReqT, RespT> CompletableFuture<Response<RespT>> asyncUnaryCall(
       ClientCall<ReqT, RespT> call, Metadata headers, ReqT request) {
     var listener = new CompletableFutureListener<RespT>();
 
