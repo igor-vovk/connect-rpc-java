@@ -9,7 +9,19 @@ plugins {
     `kotlin-dsl`
 }
 
+// Set Kotlin JVM target to 17
+kotlin {
+    jvmToolchain(17)
+}
+
 repositories {
     // Use the plugin portal to apply community plugins in convention plugins.
     gradlePluginPortal()
+    mavenCentral()
+    google()
+}
+
+dependencies {
+    implementation("com.google.protobuf:protobuf-gradle-plugin:0.9.5")
+    implementation("com.diffplug.spotless:spotless-plugin-gradle:7.0.3")
 }

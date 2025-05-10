@@ -1,5 +1,8 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import io.grpc.ManagedChannel;
 import io.grpc.Server;
 import me.ivovk.connect_rpc_java.core.Configurer;
@@ -9,21 +12,18 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 class InProcessChannelBridgeTest {
 
   @Test
   void testChannelContextShutdown() throws InterruptedException {
     // Act
-    InProcessChannelBridge.ChannelContext context = InProcessChannelBridge.create(
-        Collections.emptyList(),
-        Configurer.noop(),
-        Configurer.noop(),
-        Executors.newSingleThreadExecutor(),
-        Duration.ofSeconds(5)
-    );
+    InProcessChannelBridge.ChannelContext context =
+        InProcessChannelBridge.create(
+            Collections.emptyList(),
+            Configurer.noop(),
+            Configurer.noop(),
+            Executors.newSingleThreadExecutor(),
+            Duration.ofSeconds(5));
 
     // Assert: Server and channel are running
     Server server = context.server();

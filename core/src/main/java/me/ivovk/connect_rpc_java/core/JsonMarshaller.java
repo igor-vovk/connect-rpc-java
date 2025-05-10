@@ -22,10 +22,7 @@ public class JsonMarshaller {
   }
 
   public static <T extends Message> Marshaller<T> jsonMarshaller(
-      T defaultInstance,
-      Parser parser,
-      Printer printer
-  ) {
+      T defaultInstance, Parser parser, Printer printer) {
     Charset charset = StandardCharsets.UTF_8;
 
     return new Marshaller<>() {
@@ -34,8 +31,10 @@ public class JsonMarshaller {
         try {
           return new ByteArrayInputStream(printer.print(value).getBytes(charset));
         } catch (InvalidProtocolBufferException e) {
-          throw Status.INTERNAL.withDescription("Unable to print json proto")
-              .withCause(e).asRuntimeException();
+          throw Status.INTERNAL
+              .withDescription("Unable to print json proto")
+              .withCause(e)
+              .asRuntimeException();
         }
       }
 
@@ -51,8 +50,10 @@ public class JsonMarshaller {
           proto = (T) builder.build();
           reader.close();
         } catch (IOException e) {
-          throw Status.INTERNAL.withDescription("Invalid protobuf byte sequence")
-              .withCause(e).asRuntimeException();
+          throw Status.INTERNAL
+              .withDescription("Invalid protobuf byte sequence")
+              .withCause(e)
+              .asRuntimeException();
         }
 
         return proto;

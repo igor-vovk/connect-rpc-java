@@ -1,17 +1,17 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.Test;
 import test.MethodRegistryTestServiceGrpc;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 class MethodRegistryTest {
 
-  static class TestGrpcServiceImpl extends MethodRegistryTestServiceGrpc.MethodRegistryTestServiceImplBase {
-  }
+  static class TestGrpcServiceImpl
+      extends MethodRegistryTestServiceGrpc.MethodRegistryTestServiceImplBase {}
 
   @Test
   void testMethodRegistry() {
@@ -38,5 +38,4 @@ class MethodRegistryTest {
     assertEquals("/v1/test/http_annotation_method", httpRule.getPost());
     assertEquals("*", httpRule.getBody());
   }
-
 }

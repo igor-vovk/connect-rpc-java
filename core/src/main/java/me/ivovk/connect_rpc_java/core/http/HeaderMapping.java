@@ -14,19 +14,16 @@ public interface HeaderMapping<H> {
 
   H trailersToHeaders(Metadata trailers);
 
-  Predicate<String> DEFAULT_INCOMING_HEADERS_FILTER = name ->
-      !(name.startsWith("Connection") || name.startsWith("connection"));
+  Predicate<String> DEFAULT_INCOMING_HEADERS_FILTER =
+      name -> !(name.startsWith("Connection") || name.startsWith("connection"));
 
-  Predicate<String> DEFAULT_OUTGOING_HEADERS_FILTER = name ->
-      !name.startsWith("grpc-");
+  Predicate<String> DEFAULT_OUTGOING_HEADERS_FILTER = name -> !name.startsWith("grpc-");
 
   Map<String, Metadata.Key<String>> KEY_CACHE = new WeakHashMap<>();
 
   static Metadata.Key<String> cachedAsciiKey(String name) {
     return KEY_CACHE.computeIfAbsent(
-        name,
-        k -> Metadata.Key.of(k, Metadata.ASCII_STRING_MARSHALLER)
-    );
+        name, k -> Metadata.Key.of(k, Metadata.ASCII_STRING_MARSHALLER));
   }
 
   static Metadata.Key<String> metadataKeyByHeaderName(String name) {
@@ -35,5 +32,4 @@ public interface HeaderMapping<H> {
       default -> cachedAsciiKey(name);
     };
   }
-
 }
