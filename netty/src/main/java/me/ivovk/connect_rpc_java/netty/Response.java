@@ -1,6 +1,6 @@
 package me.ivovk.connect_rpc_java.netty;
 
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.Message;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -11,13 +11,13 @@ import java.io.IOException;
 public class Response {
 
   public static HttpResponse create(
-      GeneratedMessageV3 message, Marshaller<GeneratedMessageV3> marshaller, HttpHeaders headers) {
+      Message message, Marshaller<Message> marshaller, HttpHeaders headers) {
     return create(message, marshaller, headers, HttpResponseStatus.OK);
   }
 
   public static HttpResponse create(
-      GeneratedMessageV3 message,
-      Marshaller<GeneratedMessageV3> marshaller,
+      Message message,
+      Marshaller<Message> marshaller,
       HttpHeaders headers,
       HttpResponseStatus status) {
     ByteBuf buff;

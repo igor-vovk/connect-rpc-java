@@ -4,8 +4,9 @@ import static me.ivovk.connect_rpc_java.core.http.json.JsonMarshaller.jsonMarsha
 
 import com.google.api.AnnotationsProto;
 import com.google.api.HttpRule;
-import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.Message;
 import io.grpc.MethodDescriptor;
+import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
 import me.ivovk.connect_rpc_java.core.http.MediaTypes;
@@ -19,21 +20,19 @@ public class MethodRegistry {
 
   public record Entry(
       MethodName methodName,
-      MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptor,
-      MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> jsonDescriptor,
+      MethodDescriptor<Message, Message> descriptor,
+      MethodDescriptor<Message, Message> jsonDescriptor,
       Optional<HttpRule> httpRule) {
 
-    public MethodDescriptor.Marshaller<GeneratedMessageV3> requestMarshaller(
-        MediaTypes.MediaType mediaType) {
+    public Marshaller<Message> requestMarshaller(MediaTypes.MediaType mediaType) {
       return descriptorByMediaType(mediaType).getRequestMarshaller();
     }
 
-    public MethodDescriptor.Marshaller<GeneratedMessageV3> responseMarshaller(
-        MediaTypes.MediaType mediaType) {
+    public Marshaller<Message> responseMarshaller(MediaTypes.MediaType mediaType) {
       return descriptorByMediaType(mediaType).getResponseMarshaller();
     }
 
-    private MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3> descriptorByMediaType(
+    private MethodDescriptor<Message, Message> descriptorByMediaType(
         MediaTypes.MediaType mediaType) {
       if (mediaType.equals(MediaTypes.APPLICATION_JSON)) {
         return jsonDescriptor;
@@ -65,9 +64,7 @@ public class MethodRegistry {
             .map(
                 smd -> {
                   @SuppressWarnings("unchecked")
-                  var descriptor =
-                      (MethodDescriptor<GeneratedMessageV3, GeneratedMessageV3>)
-                          smd.getMethodDescriptor();
+                  var descriptor = (MethodDescriptor<Message, Message>) smd.getMethodDescriptor();
 
                   var methodName =
                       new MethodName(descriptor.getServiceName(), descriptor.getBareMethodName());
@@ -109,7 +106,7 @@ public class MethodRegistry {
     return Optional.empty();
   }
 
-  protected static <T> T getMessagePrototype(MethodDescriptor.Marshaller<T> marshaller) {
+  protected static <T> T getMessagePrototype(Marshaller<T> marshaller) {
     if (marshaller instanceof MethodDescriptor.PrototypeMarshaller<T> prototypeMarshaller) {
       return prototypeMarshaller.getMessagePrototype();
     } else {

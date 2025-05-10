@@ -16,7 +16,6 @@ import me.ivovk.connect_rpc_java.netty.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -65,9 +64,7 @@ public class ConnectHandler {
                       .add(HttpHeaderNames.CONTENT_TYPE, request.mediaType().toString());
 
               return Response.create(
-                  response.message(),
-                  method.responseMarshaller(request.mediaType()),
-                  httpHeaders);
+                  response.message(), method.responseMarshaller(request.mediaType()), httpHeaders);
             });
   }
 }
