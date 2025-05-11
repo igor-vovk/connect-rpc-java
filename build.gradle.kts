@@ -4,7 +4,8 @@
 
 plugins {
     base
-    id("org.gradle.toolchains.foojay-resolver-convention") version "0.8.0" apply false
+    idea
+    id("org.gradle.toolchains.foojay-resolver-convention") version "0.10.0" apply false
     // Apply any other common plugins here
 }
 

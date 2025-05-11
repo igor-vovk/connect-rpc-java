@@ -24,23 +24,40 @@ public class ConnectHandler {
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final Channel channel;
+  private final ConnectErrorHandler errorHandler;
   private final HeaderMapping<HttpHeaders> headerMapping;
 
-  public ConnectHandler(Channel channel, HeaderMapping<HttpHeaders> headerMapping) {
+  public ConnectHandler(
+      Channel channel, ConnectErrorHandler errorHandler, HeaderMapping<HttpHeaders> headerMapping) {
     this.channel = channel;
+    this.errorHandler = errorHandler;
     this.headerMapping = headerMapping;
   }
 
   public CompletableFuture<HttpResponse> handle(
       RequestEntity request, MethodRegistry.Entry method) {
-    if (method.descriptor().getType() == MethodDescriptor.MethodType.UNARY) {
-      return handleUnary(request, method);
-    } else {
-      logger.warn("Unsupported method type: {}", method.descriptor().getType());
+    try {
+      if (method.methodType() == MethodDescriptor.MethodType.UNARY) {
+        return handleUnary(request, method).exceptionally(ex -> {
+          if (logger.isTraceEnabled()) {
+            logger.trace("Error processing request", ex);
+          }
+          return errorHandler.handle(ex, request.mediaType());
+        });
+      } else {
+        logger.warn("Unsupported method type: {}", method.methodType());
 
-      throw Status.UNIMPLEMENTED
-          .withDescription("Unsupported method type: " + method.descriptor().getType())
-          .asRuntimeException();
+        throw Status.UNIMPLEMENTED
+            .withDescription("Unsupported method type: " + method.methodType())
+            .asRuntimeException();
+      }
+    } catch (Exception e) {
+      if (logger.isTraceEnabled()) {
+        logger.trace("Error processing request", e);
+      }
+
+      var httpResponse = errorHandler.handle(e, request.mediaType());
+      return CompletableFuture.completedFuture(httpResponse);
     }
   }
 

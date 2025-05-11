@@ -23,6 +23,7 @@ import me.ivovk.connect_rpc_java.core.grpc.InProcessChannelBridge;
 import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.Paths;
+import me.ivovk.connect_rpc_java.netty.connect.ConnectErrorHandler;
 import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,7 +158,9 @@ public class NettyServerBuilder {
         new NettyHeaderMapping(
             incomingHeadersFilter, outgoingHeadersFilter, treatTrailersAsHeaders);
 
-    var connectHandler = new ConnectHandler(channelContext.channel(), headerMapping);
+    var errorHandler = new ConnectErrorHandler(headerMapping);
+
+    var connectHandler = new ConnectHandler(channelContext.channel(), errorHandler, headerMapping);
 
     var ioHandlerFactory = NioIoHandler.newFactory();
     var bossGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);

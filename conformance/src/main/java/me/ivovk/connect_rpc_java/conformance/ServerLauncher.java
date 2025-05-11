@@ -1,6 +1,7 @@
 package me.ivovk.connect_rpc_java.conformance;
 
 import connectrpc.conformance.v1.ServerCompat;
+import me.ivovk.connect_rpc_java.conformance.util.MetadataAttachingInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.MetadataInjectingInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.ServerCompatSerDeser;
 import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
@@ -21,9 +22,9 @@ import org.slf4j.LoggerFactory;
  * <p><a
  * href="https://github.com/connectrpc/conformance/blob/main/docs/configuring_and_running_tests.md">...</a>
  */
-public class NettyServerLauncher {
+public class ServerLauncher {
 
-  private static final Logger logger = LoggerFactory.getLogger(NettyServerLauncher.class);
+  private static final Logger logger = LoggerFactory.getLogger(ServerLauncher.class);
 
   public static void main(String[] args) throws Exception {
     var req = ServerCompatSerDeser.readRequest(System.in);
@@ -35,6 +36,7 @@ public class NettyServerLauncher {
             .serverBuilderConfigurer(
                 sb -> {
                   sb.intercept(new MetadataInjectingInterceptor());
+                  sb.intercept(new MetadataAttachingInterceptor());
 
                   return sb;
                 })
@@ -48,8 +50,8 @@ public class NettyServerLauncher {
 
     ServerCompatSerDeser.writeResponse(System.out, resp);
 
-    System.err.println("Server started on " + server.getHost() + ":" + server.getPort());
-    logger.info("Server started on {}:{}", server.getHost(), server.getPort());
+    System.err.println("Netty Server started on " + server.getHost() + ":" + server.getPort());
+    logger.info("Netty Server started on {}:{}", server.getHost(), server.getPort());
 
     Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
   }

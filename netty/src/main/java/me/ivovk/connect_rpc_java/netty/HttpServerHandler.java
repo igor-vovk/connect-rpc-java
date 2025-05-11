@@ -106,6 +106,12 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
     }
   }
 
+  @Override
+  public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+    logger.error("Exception caught in HTTP server handler", cause);
+    ctx.close();
+  }
+
   private void sendError(ChannelHandlerContext ctx, String message, HttpResponseStatus status) {
     var response = errorResponse(message, status);
     ctx.writeAndFlush(response);

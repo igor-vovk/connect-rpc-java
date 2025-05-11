@@ -1,6 +1,7 @@
 import com.google.protobuf.gradle.*
 
 plugins {
+    application
     id("connect.library-conventions")
     id("connect.protobuf-conventions")
 }
@@ -9,10 +10,15 @@ protobuf {
     generateProtoTasks {
         ofSourceSet("main").forEach {
             it.plugins {
-                id("grpc") { }
+                id("grpc") {}
             }
         }
     }
+}
+
+application {
+    version = "1.0.0"
+    mainClass = "me.ivovk.connect_rpc_java.conformance.ServerLauncher"
 }
 
 dependencies {

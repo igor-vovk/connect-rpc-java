@@ -1,11 +1,10 @@
-FROM sbtscala/scala-sbt:eclipse-temurin-23.0.1_11_1.10.7_3.3.4 AS sbt_image
+FROM gradle:8-jdk17 AS base
 
-FROM alpine AS conformance
-RUN apk add --no-cache bash curl tar
-
+FROM base AS conformance
 RUN mkdir /conformance
 WORKDIR /conformance
 RUN <<EOF
+    set -e
     CONFORMANCE_VERSION="v1.0.4"
     UNAME_OS=$(uname -s)
     UNAME_ARCH=$(uname -m)
@@ -16,22 +15,25 @@ RUN <<EOF
     chmod +x connectconformance
 EOF
 
-FROM sbt_image AS build
+FROM base AS build
 
 ADD . /app
 WORKDIR /app
-RUN sbt stage
+RUN <<EOF
+    set -e
+    ./gradlew :conformance:build
+    unzip -q conformance/build/distributions/conformance-1.0.0.zip -d .
+EOF
 
-FROM sbt_image AS runner
+FROM base AS runner
 
 COPY --from=conformance /conformance /conformance
-ADD build/conformance/*.yaml /conformance/
-COPY --from=build /app/conformance/target/universal/stage /app
+ADD conformance-build/*.yaml /conformance/
+COPY --from=build /app/conformance-1.0.0 /app
 WORKDIR /conformance
 
 RUN mkdir "/logs"
 
-ARG launcher
 ARG config="suite.yaml"
 ARG stable="true"
 
@@ -44,7 +46,7 @@ RUN LOGS_PATH="/logs" \
     --parallel 1 \
     -v -vv --trace \
     -- \
-    /app/bin/conformance -main org.ivovk.connect_rpc_scala.conformance.$launcher; \
+    /app/bin/conformance; \
     if [ "$stable" = "false" ]; then exit 0; fi
 
 FROM scratch AS export

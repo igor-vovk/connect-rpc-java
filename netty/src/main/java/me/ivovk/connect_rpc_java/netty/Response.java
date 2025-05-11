@@ -10,16 +10,13 @@ import java.io.IOException;
 
 public class Response {
 
-  public static HttpResponse create(
-      Message message, Marshaller<Message> marshaller, HttpHeaders headers) {
+  public static <M extends Message> HttpResponse create(
+      M message, Marshaller<M> marshaller, HttpHeaders headers) {
     return create(message, marshaller, headers, HttpResponseStatus.OK);
   }
 
-  public static HttpResponse create(
-      Message message,
-      Marshaller<Message> marshaller,
-      HttpHeaders headers,
-      HttpResponseStatus status) {
+  public static <M extends Message> HttpResponse create(
+      M message, Marshaller<M> marshaller, HttpHeaders headers, HttpResponseStatus status) {
     ByteBuf buff;
     int contentLength;
     try (var responseStream = marshaller.stream(message)) {

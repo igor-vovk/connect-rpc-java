@@ -53,17 +53,13 @@ public class InProcessChannelBridge {
     ServerBuilder<?> builder =
         InProcessServerBuilder.forName(name).addServices(services).executor(executor);
 
-    builder = serverBuilderConfigurer.configure(builder);
-
-    return builder.build();
+    return serverBuilderConfigurer.configure(builder).build();
   }
 
   static ManagedChannel createChannel(
       String name, Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer) {
     ManagedChannelBuilder<?> builder = InProcessChannelBuilder.forName(name);
 
-    builder = channelBuilderConfigurer.configure(builder);
-
-    return builder.build();
+    return channelBuilderConfigurer.configure(builder).build();
   }
 }

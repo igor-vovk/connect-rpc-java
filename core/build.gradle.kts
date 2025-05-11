@@ -7,7 +7,7 @@ plugins {
 
 protobuf {
     generateProtoTasks {
-        ofSourceSet("test").forEach {
+        all().forEach {
             it.plugins {
                 id("grpc") { }
             }

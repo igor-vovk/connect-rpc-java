@@ -12,7 +12,8 @@ public class MetadataInjectingInterceptor implements ServerInterceptor {
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
       ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
-    Context.current().withValue(Constants.METADATA_KEY, headers);
+    MetadataAccess.setRequestMetadata(headers);
+
     return next.startCall(call, headers);
   }
 }

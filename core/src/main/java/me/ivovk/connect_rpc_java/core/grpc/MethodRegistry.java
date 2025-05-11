@@ -18,11 +18,22 @@ import java.util.stream.Collectors;
 
 public class MethodRegistry {
 
-  public record Entry(
-      MethodName methodName,
-      MethodDescriptor<Message, Message> descriptor,
-      MethodDescriptor<Message, Message> jsonDescriptor,
-      Optional<HttpRule> httpRule) {
+  public static class Entry {
+    private final MethodName methodName;
+    private final MethodDescriptor<Message, Message> descriptor;
+    private final MethodDescriptor<Message, Message> jsonDescriptor;
+    private final Optional<HttpRule> httpRule;
+
+    public Entry(
+        MethodName methodName,
+        MethodDescriptor<Message, Message> descriptor,
+        MethodDescriptor<Message, Message> jsonDescriptor,
+        Optional<HttpRule> httpRule) {
+      this.methodName = methodName;
+      this.descriptor = descriptor;
+      this.jsonDescriptor = jsonDescriptor;
+      this.httpRule = httpRule;
+    }
 
     public Marshaller<Message> requestMarshaller(MediaTypes.MediaType mediaType) {
       return descriptorByMediaType(mediaType).getRequestMarshaller();
@@ -42,6 +53,22 @@ public class MethodRegistry {
         throw new IllegalArgumentException("Unsupported media type: " + mediaType);
       }
     }
+
+    public MethodDescriptor<Message, Message> descriptor() {
+      return descriptor;
+    }
+
+    public MethodDescriptor.MethodType methodType() {
+      return descriptor.getType();
+    }
+
+    public MethodName methodName() {
+      return methodName;
+    }
+
+    public Optional<HttpRule> httpRule() {
+      return httpRule;
+    }
   }
 
   private final List<Entry> entries;
@@ -53,21 +80,20 @@ public class MethodRegistry {
         entries.stream()
             .collect(
                 Collectors.groupingBy(
-                    entry -> entry.methodName.service(),
-                    Collectors.toMap(entry -> entry.methodName.method(), entry -> entry)));
+                    e -> e.methodName.service(),
+                    Collectors.toMap(e -> e.methodName.method(), e -> e)));
   }
 
   public static MethodRegistry create(List<ServerServiceDefinition> services) {
     var entries =
         services.stream()
-            .flatMap(s -> s.getMethods().stream())
+            .flatMap(ssd -> ssd.getMethods().stream())
             .map(
                 smd -> {
                   @SuppressWarnings("unchecked")
                   var descriptor = (MethodDescriptor<Message, Message>) smd.getMethodDescriptor();
 
-                  var methodName =
-                      new MethodName(descriptor.getServiceName(), descriptor.getBareMethodName());
+                  var methodName = MethodName.from(descriptor);
 
                   var jsonDescriptor =
                       descriptor.toBuilder()
