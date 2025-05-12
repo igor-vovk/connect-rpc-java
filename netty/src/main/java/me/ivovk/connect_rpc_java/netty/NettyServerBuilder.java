@@ -1,5 +1,6 @@
 package me.ivovk.connect_rpc_java.netty;
 
+import com.google.protobuf.TypeRegistry;
 import io.grpc.BindableService;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.ServerBuilder;
@@ -23,11 +24,13 @@ import me.ivovk.connect_rpc_java.core.grpc.InProcessChannelBridge;
 import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.Paths;
+import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import me.ivovk.connect_rpc_java.netty.connect.ConnectErrorHandler;
 import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.time.Duration;
 import java.util.List;
@@ -46,6 +49,7 @@ public class NettyServerBuilder {
   private List<ServerServiceDefinition> services;
   private Configurer<ServerBuilder<?>> serverBuilderConfigurer = Configurer.noop();
   private Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer = Configurer.noop();
+  private Configurer<TypeRegistry.Builder> jsonTypeRegistryConfigurer = Configurer.noop();
   private Predicate<String> incomingHeadersFilter = HeaderMapping.DEFAULT_INCOMING_HEADERS_FILTER;
   private Predicate<String> outgoingHeadersFilter = HeaderMapping.DEFAULT_OUTGOING_HEADERS_FILTER;
   private Paths.Path pathPrefix = Paths.Path.ROOT_PATH;
@@ -85,6 +89,13 @@ public class NettyServerBuilder {
   public NettyServerBuilder channelBuilderConfigurer(
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer) {
     this.channelBuilderConfigurer = channelBuilderConfigurer;
+
+    return this;
+  }
+
+  public NettyServerBuilder jsonTypeRegistryConfigurer(
+      Configurer<TypeRegistry.Builder> jsonTypeRegistryConfigurer) {
+    this.jsonTypeRegistryConfigurer = jsonTypeRegistryConfigurer;
 
     return this;
   }
@@ -143,7 +154,7 @@ public class NettyServerBuilder {
     return this;
   }
 
-  public NettyServer build() throws InterruptedException {
+  public NettyServer build() throws InterruptedException, IOException {
     var channelContext =
         InProcessChannelBridge.create(
             services,
@@ -152,7 +163,10 @@ public class NettyServerBuilder {
             executor,
             terminationTimeout);
 
-    var methodRegistry = MethodRegistry.create(services);
+    var jsonTypeRegistry = jsonTypeRegistryConfigurer.configure(TypeRegistry.newBuilder()).build();
+    var jsonMarshallerFactory = new JsonMarshallerFactory(jsonTypeRegistry);
+
+    var methodRegistry = MethodRegistry.create(services, jsonMarshallerFactory);
 
     var headerMapping =
         new NettyHeaderMapping(

@@ -4,9 +4,9 @@ import connectrpc.ErrorOuterClass;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import me.ivovk.connect_rpc_java.core.JsonMarshaller;
 import me.ivovk.connect_rpc_java.core.connect.ErrorHandling;
 import me.ivovk.connect_rpc_java.core.http.MediaTypes;
+import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import me.ivovk.connect_rpc_java.netty.NettyHeaderMapping;
 import me.ivovk.connect_rpc_java.netty.Response;
 import org.slf4j.Logger;
@@ -35,7 +35,7 @@ public class ConnectErrorHandler {
       };
 
   private static final Marshaller<ErrorOuterClass.Error> JSON_MARSHALLER =
-      JsonMarshaller.jsonMarshaller(ErrorOuterClass.Error.getDefaultInstance());
+      new JsonMarshallerFactory().jsonMarshaller(ErrorOuterClass.Error.getDefaultInstance());
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
 

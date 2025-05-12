@@ -38,12 +38,8 @@ public class ConnectHandler {
       RequestEntity request, MethodRegistry.Entry method) {
     try {
       if (method.methodType() == MethodDescriptor.MethodType.UNARY) {
-        return handleUnary(request, method).exceptionally(ex -> {
-          if (logger.isTraceEnabled()) {
-            logger.trace("Error processing request", ex);
-          }
-          return errorHandler.handle(ex, request.mediaType());
-        });
+        return handleUnary(request, method)
+            .exceptionally(ex -> errorHandler.handle(ex, request.mediaType()));
       } else {
         logger.warn("Unsupported method type: {}", method.methodType());
 

@@ -1,7 +1,5 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
-import static me.ivovk.connect_rpc_java.core.http.json.JsonMarshaller.jsonMarshaller;
-
 import com.google.api.AnnotationsProto;
 import com.google.api.HttpRule;
 import com.google.protobuf.Message;
@@ -10,6 +8,7 @@ import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
 import me.ivovk.connect_rpc_java.core.http.MediaTypes;
+import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -84,7 +83,8 @@ public class MethodRegistry {
                     Collectors.toMap(e -> e.methodName.method(), e -> e)));
   }
 
-  public static MethodRegistry create(List<ServerServiceDefinition> services) {
+  public static MethodRegistry create(
+      List<ServerServiceDefinition> services, JsonMarshallerFactory jsonMarshallerFactory) {
     var entries =
         services.stream()
             .flatMap(ssd -> ssd.getMethods().stream())
@@ -98,10 +98,10 @@ public class MethodRegistry {
                   var jsonDescriptor =
                       descriptor.toBuilder()
                           .setRequestMarshaller(
-                              jsonMarshaller(
+                              jsonMarshallerFactory.jsonMarshaller(
                                   getMessagePrototype(descriptor.getRequestMarshaller())))
                           .setResponseMarshaller(
-                              jsonMarshaller(
+                              jsonMarshallerFactory.jsonMarshaller(
                                   getMessagePrototype(descriptor.getResponseMarshaller())))
                           .build();
 

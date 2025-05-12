@@ -11,8 +11,10 @@ import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.stub.StreamObserver;
-import me.ivovk.connect_rpc_java.conformance.util.MetadataAccess;
+import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataAccess;
 import me.ivovk.connect_rpc_java.core.grpc.ErrorDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,29 +22,43 @@ import java.util.Optional;
 public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceServiceImplBase {
   record UnaryHandlerResponse(ConformancePayload payload, Metadata metadata) {}
 
+  private static final Logger logger = LoggerFactory.getLogger(ConformanceServiceImpl.class);
+
   @Override
   public void unary(UnaryRequest request, StreamObserver<UnaryResponse> responseObserver) {
-    var metadata = MetadataAccess.getRequestMetadata();
+    try {
+      var metadata = MetadataAccess.getRequestMetadata();
 
-    var response = handleUnaryRequest(request.getResponseDefinition(), List.of(request), metadata);
+      var response =
+          handleUnaryRequest(request.getResponseDefinition(), List.of(request), metadata);
 
-    responseObserver.onNext(UnaryResponse.newBuilder().setPayload(response.payload).build());
-    MetadataAccess.setResponseTrailers(response.metadata);
+      responseObserver.onNext(UnaryResponse.newBuilder().setPayload(response.payload).build());
+      MetadataAccess.setResponseTrailers(response.metadata);
 
-    responseObserver.onCompleted();
+      responseObserver.onCompleted();
+    } catch (Exception e) {
+      logger.error("Error in unary call: ", e);
+      responseObserver.onError(e);
+    }
   }
 
   @Override
   public void idempotentUnary(
       IdempotentUnaryRequest request, StreamObserver<IdempotentUnaryResponse> responseObserver) {
-    var metadata = MetadataAccess.getRequestMetadata();
+    try {
+      var metadata = MetadataAccess.getRequestMetadata();
 
-    var response = handleUnaryRequest(request.getResponseDefinition(), List.of(request), metadata);
+      var response =
+          handleUnaryRequest(request.getResponseDefinition(), List.of(request), metadata);
 
-    responseObserver.onNext(
-        IdempotentUnaryResponse.newBuilder().setPayload(response.payload).build());
-    MetadataAccess.setResponseTrailers(response.metadata);
-    responseObserver.onCompleted();
+      responseObserver.onNext(
+          IdempotentUnaryResponse.newBuilder().setPayload(response.payload).build());
+      MetadataAccess.setResponseTrailers(response.metadata);
+      responseObserver.onCompleted();
+    } catch (Exception e) {
+      logger.error("Error in idempotent unary call: ", e);
+      responseObserver.onError(e);
+    }
   }
 
   private UnaryHandlerResponse handleUnaryRequest(

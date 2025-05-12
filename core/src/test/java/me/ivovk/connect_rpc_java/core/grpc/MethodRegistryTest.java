@@ -3,6 +3,7 @@ package me.ivovk.connect_rpc_java.core.grpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import org.junit.jupiter.api.Test;
 import test.MethodRegistryTestServiceGrpc;
 
@@ -16,7 +17,8 @@ class MethodRegistryTest {
   @Test
   void testMethodRegistry() {
     var service = new TestGrpcServiceImpl();
-    var registry = MethodRegistry.create(List.of(service.bindService()));
+    var registry =
+        MethodRegistry.create(List.of(service.bindService()), new JsonMarshallerFactory());
 
     var entry = registry.get("test.MethodRegistryTestService", "SimpleMethod");
     assertTrue(entry.isPresent());
@@ -28,7 +30,8 @@ class MethodRegistryTest {
   @Test
   void testHttpAnnotationParsing() {
     var service = new TestGrpcServiceImpl();
-    var registry = MethodRegistry.create(List.of(service.bindService()));
+    var registry =
+        MethodRegistry.create(List.of(service.bindService()), new JsonMarshallerFactory());
 
     var entry = registry.get("test.MethodRegistryTestService", "HttpAnnotationMethod");
     assertTrue(entry.isPresent());

@@ -24,6 +24,10 @@ public class MediaTypes {
       List.of(APPLICATION_JSON, APPLICATION_PROTO);
 
   public static MediaType parse(String s) throws IllegalArgumentException {
+    var semicolonIdx = s.indexOf(';');
+    if (semicolonIdx != -1) {
+      s = s.substring(0, semicolonIdx);
+    }
     return switch (s) {
       case "application/json" -> APPLICATION_JSON;
       case "application/proto" -> APPLICATION_PROTO;

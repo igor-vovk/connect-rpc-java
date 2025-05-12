@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 class InProcessChannelBridgeTest {
 
   @Test
-  void testChannelContextShutdown() throws InterruptedException {
+  void testChannelContextShutdown() throws Exception {
     // Act
     InProcessChannelBridge.ChannelContext context =
         InProcessChannelBridge.create(

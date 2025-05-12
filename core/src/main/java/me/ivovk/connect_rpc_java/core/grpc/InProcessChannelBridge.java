@@ -4,7 +4,10 @@ import io.grpc.*;
 import io.grpc.inprocess.InProcessChannelBuilder;
 import io.grpc.inprocess.InProcessServerBuilder;
 import me.ivovk.connect_rpc_java.core.Configurer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -12,8 +15,14 @@ import java.util.concurrent.TimeUnit;
 
 public class InProcessChannelBridge {
 
+  protected static final Logger logger = LoggerFactory.getLogger(InProcessChannelBridge.class);
+
   public record ChannelContext(ManagedChannel channel, Server server, Duration terminationTimeout) {
     public void shutdown() throws InterruptedException {
+      if (logger.isTraceEnabled()) {
+        logger.trace("Shutting down channel and server");
+      }
+
       server.shutdown();
       channel.shutdown();
 
@@ -36,7 +45,8 @@ public class InProcessChannelBridge {
       Configurer<ServerBuilder<?>> serverBuilderConfigurer,
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer,
       Executor executor,
-      Duration awaitTerminationTimeout) {
+      Duration awaitTerminationTimeout)
+      throws IOException {
     var name = InProcessServerBuilder.generateName();
 
     var server = createServer(name, services, serverBuilderConfigurer, executor);
@@ -49,11 +59,12 @@ public class InProcessChannelBridge {
       String name,
       List<ServerServiceDefinition> services,
       Configurer<ServerBuilder<?>> serverBuilderConfigurer,
-      Executor executor) {
+      Executor executor)
+      throws IOException {
     ServerBuilder<?> builder =
         InProcessServerBuilder.forName(name).addServices(services).executor(executor);
 
-    return serverBuilderConfigurer.configure(builder).build();
+    return serverBuilderConfigurer.configure(builder).build().start();
   }
 
   static ManagedChannel createChannel(

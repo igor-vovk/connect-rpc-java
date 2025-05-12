@@ -1,12 +1,14 @@
 package me.ivovk.connect_rpc_java.conformance;
 
 import connectrpc.conformance.v1.ServerCompat;
-import me.ivovk.connect_rpc_java.conformance.util.MetadataAttachingInterceptor;
-import me.ivovk.connect_rpc_java.conformance.util.MetadataInjectingInterceptor;
+import connectrpc.conformance.v1.Service;
+import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.ServerCompatSerDeser;
 import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Flow:
@@ -35,11 +37,18 @@ public class ServerLauncher {
         NettyServerBuilder.forServices(service)
             .serverBuilderConfigurer(
                 sb -> {
-                  sb.intercept(new MetadataInjectingInterceptor());
-                  sb.intercept(new MetadataAttachingInterceptor());
-
-                  return sb;
+                  // sb.intercept(new ErrorLoggingInterceptor());
+                  return sb.intercept(new MetadataInterceptor());
                 })
+            // Registering message types in TypeRegistry is required to pass
+            // com.google.protobuf.any.Any
+            // JSON-serialization conformance tests
+            .jsonTypeRegistryConfigurer(
+                b ->
+                    b.add(
+                        List.of(
+                            Service.UnaryRequest.getDescriptor(),
+                            Service.IdempotentUnaryRequest.getDescriptor())))
             .build();
 
     var resp =

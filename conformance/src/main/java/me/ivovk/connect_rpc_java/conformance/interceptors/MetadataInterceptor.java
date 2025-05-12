@@ -1,11 +1,13 @@
-package me.ivovk.connect_rpc_java.conformance.util;
+package me.ivovk.connect_rpc_java.conformance.interceptors;
 
 import io.grpc.*;
 
-public class MetadataAttachingInterceptor implements ServerInterceptor {
+public class MetadataInterceptor implements ServerInterceptor {
   @Override
   public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
       ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+    MetadataAccess.setRequestMetadata(headers);
+
     return next.startCall(new MetadataAttachingServerCall<>(call), headers);
   }
 

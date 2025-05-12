@@ -2,6 +2,7 @@ package me.ivovk.connect_rpc_java.core.http.json;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Parser;
 import com.google.protobuf.util.JsonFormat.Printer;
@@ -16,21 +17,23 @@ import java.nio.charset.StandardCharsets;
  * <a
  * href="https://github.com/grpc/grpc-java/blob/master/examples/src/main/java/io/grpc/examples/advanced/JsonMarshaller.java">source</a>
  */
-public class JsonMarshaller {
+public class JsonMarshallerFactory {
 
-  static final Charset charset = StandardCharsets.UTF_8;
+  private static final Charset charset = StandardCharsets.UTF_8;
 
-  private JsonMarshaller() {}
+  private final Parser parser;
+  private final Printer printer;
 
-  public static <T extends Message> Marshaller<T> jsonMarshaller(final T defaultInstance) {
-    var parser = JsonFormat.parser();
-    var printer = JsonFormat.printer();
-
-    return jsonMarshaller(defaultInstance, parser, printer);
+  public JsonMarshallerFactory() {
+    this(TypeRegistry.getEmptyTypeRegistry());
   }
 
-  public static <T extends Message> Marshaller<T> jsonMarshaller(
-      final T defaultInstance, final Parser parser, final Printer printer) {
+  public JsonMarshallerFactory(TypeRegistry typeRegistry) {
+    this.parser = JsonFormat.parser().usingTypeRegistry(typeRegistry);
+    this.printer = JsonFormat.printer().usingTypeRegistry(typeRegistry);
+  }
+
+  public <T extends Message> Marshaller<T> jsonMarshaller(final T defaultInstance) {
     return new Marshaller<>() {
       @Override
       public InputStream stream(T value) {
