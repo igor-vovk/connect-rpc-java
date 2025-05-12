@@ -16,6 +16,7 @@ import me.ivovk.connect_rpc_java.core.grpc.ErrorDetails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,13 +28,14 @@ public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceSe
   @Override
   public void unary(UnaryRequest request, StreamObserver<UnaryResponse> responseObserver) {
     try {
-      var metadata = MetadataAccess.getRequestMetadata();
+      var metadataCtx = MetadataAccess.getRequestMetadata();
 
       var response =
-          handleUnaryRequest(request.getResponseDefinition(), List.of(request), metadata);
+          handleUnaryRequest(
+              request.getResponseDefinition(), List.of(request), metadataCtx.requestMetadata());
 
+      metadataCtx.sendMetadata(response.metadata);
       responseObserver.onNext(UnaryResponse.newBuilder().setPayload(response.payload).build());
-      MetadataAccess.setResponseTrailers(response.metadata);
 
       responseObserver.onCompleted();
     } catch (Exception e) {
@@ -46,14 +48,16 @@ public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceSe
   public void idempotentUnary(
       IdempotentUnaryRequest request, StreamObserver<IdempotentUnaryResponse> responseObserver) {
     try {
-      var metadata = MetadataAccess.getRequestMetadata();
+      var metadataCtx = MetadataAccess.getRequestMetadata();
 
       var response =
-          handleUnaryRequest(request.getResponseDefinition(), List.of(request), metadata);
+          handleUnaryRequest(
+              request.getResponseDefinition(), List.of(request), metadataCtx.requestMetadata());
 
+      metadataCtx.sendMetadata(response.metadata);
       responseObserver.onNext(
           IdempotentUnaryResponse.newBuilder().setPayload(response.payload).build());
-      MetadataAccess.setResponseTrailers(response.metadata);
+
       responseObserver.onCompleted();
     } catch (Exception e) {
       logger.error("Error in idempotent unary call: ", e);
@@ -114,16 +118,16 @@ public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceSe
   }
 
   private Iterable<Header> mkConformanceHeaders(Metadata metadata) {
-    return metadata.keys().stream()
-        .map(
-            k -> {
-              return Header.newBuilder()
-                  .setName(k)
-                  .addAllValue(
-                      metadata.getAll(Metadata.Key.of(k, Metadata.ASCII_STRING_MARSHALLER)))
-                  .build();
-            })
-        .toList();
+    var list = new ArrayList<Header>();
+
+    for (String k : metadata.keys()) {
+      var values = metadata.getAll(Metadata.Key.of(k, Metadata.ASCII_STRING_MARSHALLER));
+      var header = Header.newBuilder().setName(k).addAllValue(values).build();
+
+      list.add(header);
+    }
+
+    return list;
   }
 
   private Metadata mkMetadata(Iterable<Header> headers) {

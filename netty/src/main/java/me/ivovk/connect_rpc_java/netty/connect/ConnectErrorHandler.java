@@ -2,6 +2,7 @@ package me.ivovk.connect_rpc_java.netty.connect;
 
 import connectrpc.ErrorOuterClass;
 import io.grpc.MethodDescriptor.Marshaller;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import me.ivovk.connect_rpc_java.core.connect.ErrorHandling;
@@ -65,6 +66,8 @@ public class ConnectErrorHandler {
     } else {
       throw new IllegalArgumentException("Unsupported media type: " + mediaType);
     }
+
+    headers.set(HttpHeaderNames.CONTENT_TYPE, mediaType.toString());
 
     return Response.create(
         details.error(), marshaller, headers, HttpResponseStatus.valueOf(details.httpStatusCode()));
