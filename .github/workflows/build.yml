@@ -42,4 +42,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run conformance tests for ${{ matrix.config.name }}
-        run: docker build -f build/conformance/Dockerfile . --progress=plain ${{ matrix.config.args }}
+        run: docker build -f conformance-build/Dockerfile . --progress=plain ${{ matrix.config.args }}
