@@ -9,4 +9,7 @@ public class GrpcHeaders {
 
   public static Metadata.Key<String> X_TEST_CASE_NAME =
       Metadata.Key.of("x-test-case-name", Metadata.ASCII_STRING_MARSHALLER);
+
+  public static Metadata.Key<Long> CONNECT_TIMEOUT_MS =
+      Metadata.Key.of("connect-timeout-ms", MetadataSyntax.asciiMarshaller(Long::parseLong, String::valueOf));
 }

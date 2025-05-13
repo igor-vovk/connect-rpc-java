@@ -34,12 +34,13 @@ public class Response {
       contentLength = bytes.length;
       buff = Unpooled.wrappedBuffer(bytes);
     } catch (IOException e) {
+      logger.error("Error while reading response stream", e);
       throw new RuntimeException(e);
     }
 
-    var response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, buff);
-    response.headers().setAll(headers).set(HttpHeaderNames.CONTENT_LENGTH, contentLength);
+    headers.set(HttpHeaderNames.CONTENT_LENGTH, contentLength);
 
-    return response;
+    return new DefaultFullHttpResponse(
+        HttpVersion.HTTP_1_1, status, buff, headers, EmptyHttpHeaders.INSTANCE);
   }
 }

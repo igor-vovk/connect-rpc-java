@@ -21,7 +21,7 @@ ADD . /app
 WORKDIR /app
 RUN <<EOF
     set -e
-    gradle :conformance:build
+    gradle clean :conformance:build
     unzip -q conformance/build/distributions/conformance-1.0.0.zip -d .
 EOF
 

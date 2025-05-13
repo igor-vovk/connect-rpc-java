@@ -1,15 +1,21 @@
 package me.ivovk.connect_rpc_java.core.http.json;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Parser;
 import com.google.protobuf.util.JsonFormat.Printer;
+import connectrpc.ErrorOuterClass;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.Status;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
@@ -23,6 +29,7 @@ public class JsonMarshallerFactory {
 
   private final Parser parser;
   private final Printer printer;
+  private final Gson gson;
 
   public JsonMarshallerFactory() {
     this(TypeRegistry.getEmptyTypeRegistry());
@@ -31,9 +38,45 @@ public class JsonMarshallerFactory {
   public JsonMarshallerFactory(TypeRegistry typeRegistry) {
     this.parser = JsonFormat.parser().usingTypeRegistry(typeRegistry);
     this.printer = JsonFormat.printer().usingTypeRegistry(typeRegistry);
+
+    this.gson =
+        new GsonBuilder()
+            .registerTypeAdapter(
+                ErrorOuterClass.ErrorDetailsAny.class, new ErrorDetailsAnySerializer())
+            .registerTypeAdapter(ErrorOuterClass.Error.class, new ConnectErrorSerializer())
+            .create();
   }
 
   public <T extends Message> Marshaller<T> jsonMarshaller(final T defaultInstance) {
+    if (defaultInstance instanceof ErrorOuterClass.Error) {
+      return marshallerUsingGson();
+    } else {
+      return marshallerUsingProtoJsonFormat(defaultInstance);
+    }
+  }
+
+  private <T extends Message> Marshaller<T> marshallerUsingGson() {
+    return new Marshaller<>() {
+      @Override
+      public InputStream stream(T value) {
+        try {
+          return new ByteArrayInputStream(gson.toJson(value).getBytes(charset));
+        } catch (Exception e) {
+          throw Status.INTERNAL
+              .withDescription("Unable to print json proto")
+              .withCause(e)
+              .asRuntimeException();
+        }
+      }
+
+      @Override
+      public T parse(InputStream stream) {
+        throw new RuntimeException("Not implemented");
+      }
+    };
+  }
+
+  private <T extends Message> Marshaller<T> marshallerUsingProtoJsonFormat(T defaultInstance) {
     return new Marshaller<>() {
       @Override
       public InputStream stream(T value) {

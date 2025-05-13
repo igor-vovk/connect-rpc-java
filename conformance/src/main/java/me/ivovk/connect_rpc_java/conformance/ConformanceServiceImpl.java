@@ -13,8 +13,6 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.stub.StreamObserver;
 import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataAccess;
 import me.ivovk.connect_rpc_java.core.grpc.ErrorDetails;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +20,6 @@ import java.util.Optional;
 
 public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceServiceImplBase {
   record UnaryHandlerResponse(ConformancePayload payload, Metadata metadata) {}
-
-  private static final Logger logger = LoggerFactory.getLogger(ConformanceServiceImpl.class);
 
   @Override
   public void unary(UnaryRequest request, StreamObserver<UnaryResponse> responseObserver) {
@@ -39,7 +35,6 @@ public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceSe
 
       responseObserver.onCompleted();
     } catch (Exception e) {
-      logger.error("Error in unary call: ", e);
       responseObserver.onError(e);
     }
   }
@@ -60,7 +55,6 @@ public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceSe
 
       responseObserver.onCompleted();
     } catch (Exception e) {
-      logger.error("Error in idempotent unary call: ", e);
       responseObserver.onError(e);
     }
   }
@@ -95,13 +89,13 @@ public class ConformanceServiceImpl extends ConformanceServiceGrpc.ConformanceSe
     var conformancePayload =
         ConformancePayload.newBuilder().setData(responseData).setRequestInfo(requestInfo).build();
 
-    //    if (responseDefinition.getResponseDelayMs() > 0) {
-    //      try {
-    //        Thread.sleep(responseDefinition.getResponseDelayMs());
-    //      } catch (InterruptedException e) {
-    //        throw new RuntimeException(e);
-    //      }
-    //    }
+    if (responseDefinition.getResponseDelayMs() > 0) {
+      try {
+        Thread.sleep(responseDefinition.getResponseDelayMs());
+      } catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     return new UnaryHandlerResponse(conformancePayload, trailers);
   }

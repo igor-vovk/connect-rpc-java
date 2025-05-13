@@ -49,11 +49,12 @@ public class ConnectErrorHandler {
   public HttpResponse handle(Throwable e, MediaTypes.MediaType mediaType) {
     var details = ErrorHandling.extractErrorDetails(e);
     var headers = headerMapping.trailersToHeaders(details.metadata());
-
+    var httpResponseStatus = HttpResponseStatus.valueOf(details.httpStatusCode());
     if (logger.isTraceEnabled()) {
       logger.trace(
-          "<<< HTTP status: {}, Connect Error Code {}",
+          "<<< HTTP status: {} ({}), Connect Error Code {}",
           details.httpStatusCode(),
+          httpResponseStatus,
           details.error().getCode());
       logger.trace("<<< Error processing request", e);
     }
@@ -69,7 +70,6 @@ public class ConnectErrorHandler {
 
     headers.set(HttpHeaderNames.CONTENT_TYPE, mediaType.toString());
 
-    return Response.create(
-        details.error(), marshaller, headers, HttpResponseStatus.valueOf(details.httpStatusCode()));
+    return Response.create(details.error(), marshaller, headers, httpResponseStatus);
   }
 }

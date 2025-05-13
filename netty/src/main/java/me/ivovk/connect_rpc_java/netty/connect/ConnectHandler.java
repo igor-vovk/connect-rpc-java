@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class ConnectHandler {
 
@@ -39,7 +40,7 @@ public class ConnectHandler {
     try {
       if (method.methodType() == MethodDescriptor.MethodType.UNARY) {
         return handleUnary(request, method)
-            .exceptionally(ex -> errorHandler.handle(ex, request.mediaType()));
+            .exceptionally(e -> errorHandler.handle(e, request.mediaType()));
       } else {
         logger.warn("Unsupported method type: {}", method.methodType());
 
@@ -48,12 +49,7 @@ public class ConnectHandler {
             .asRuntimeException();
       }
     } catch (Exception e) {
-      if (logger.isTraceEnabled()) {
-        logger.trace("Error processing request", e);
-      }
-
-      var httpResponse = errorHandler.handle(e, request.mediaType());
-      return CompletableFuture.completedFuture(httpResponse);
+      return CompletableFuture.completedFuture(errorHandler.handle(e, request.mediaType()));
     }
   }
 
@@ -65,7 +61,13 @@ public class ConnectHandler {
           .ifPresent(caseName -> logger.trace(">>> Test Case name: {}", caseName));
     }
 
-    var call = channel.newCall(method.descriptor(), CallOptions.DEFAULT);
+    var callOptions = CallOptions.DEFAULT;
+    var timeout = Optional.ofNullable(request.headerMetadata().get(GrpcHeaders.CONNECT_TIMEOUT_MS));
+    if (timeout.isPresent()) {
+      callOptions = callOptions.withDeadlineAfter(timeout.get(), TimeUnit.MILLISECONDS);
+    }
+
+    var call = channel.newCall(method.descriptor(), callOptions);
 
     return ClientCalls.asyncUnaryCall(call, request.headerMetadata(), request.message())
         .thenApply(
