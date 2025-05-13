@@ -14,6 +14,9 @@ import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayInputStream;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.Optional;
 
 public class HttpServerHandler extends ChannelInboundHandlerAdapter {
@@ -88,7 +91,14 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 
       var requestMarshaller = grpcMethod.requestMarshaller(mediaType);
 
-      var requestMessage = requestMarshaller.parse(new ByteBufInputStream(req.content()));
+      var content =
+          isGetMethod
+              ? new ByteArrayInputStream(
+                  URLDecoder.decode(
+                          queryParam(decodedUri, "message").orElse(""), Charset.defaultCharset())
+                      .getBytes())
+              : new ByteBufInputStream(req.content());
+      var requestMessage = requestMarshaller.parse(content);
 
       var responseFuture =
           connectHandler.handle(
