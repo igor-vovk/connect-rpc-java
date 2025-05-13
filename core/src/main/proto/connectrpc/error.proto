@@ -1,0 +1,62 @@
+// Copyright 2023-2024 The Connect Authors
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package connectrpc;
+
+enum Code {
+  CODE_UNSPECIFIED = 0;
+  CODE_CANCELED = 1;
+  CODE_UNKNOWN = 2;
+  CODE_INVALID_ARGUMENT = 3;
+  CODE_DEADLINE_EXCEEDED = 4;
+  CODE_NOT_FOUND = 5;
+  CODE_ALREADY_EXISTS = 6;
+  CODE_PERMISSION_DENIED = 7;
+  CODE_RESOURCE_EXHAUSTED = 8;
+  CODE_FAILED_PRECONDITION = 9;
+  CODE_ABORTED = 10;
+  CODE_OUT_OF_RANGE = 11;
+  CODE_UNIMPLEMENTED = 12;
+  CODE_INTERNAL = 13;
+  CODE_UNAVAILABLE = 14;
+  CODE_DATA_LOSS = 15;
+  CODE_UNAUTHENTICATED = 16;
+}
+
+// This message is similar to the google.protobuf.Any message.
+//
+// Separate type was needed to introduce a separate JSON serializer for this message, since Any in error details
+// has different JSON serialization rules compared to a generic google.protobuf.Any.
+// See https://github.com/connectrpc/conformance/issues/948#issuecomment-2511130448 for some details.
+message ErrorDetailsAny {
+  string type = 1;
+  bytes value = 2;
+}
+
+// An error definition used for specifying a desired error response
+message Error {
+  // The error code.
+  // For a list of Connect error codes see: https://connectrpc.com/docs/protocol#error-codes
+  Code code = 1;
+  // If this value is absent in a test case response definition, the contents of the
+  // actual error message will not be checked. This is useful for certain kinds of
+  // error conditions where the exact message to be used is not specified, only the
+  // code.
+  optional string message = 2;
+  // Errors in Connect and gRPC protocols can have arbitrary messages
+  // attached to them, which are known as error details.
+  repeated ErrorDetailsAny details = 3;
+}

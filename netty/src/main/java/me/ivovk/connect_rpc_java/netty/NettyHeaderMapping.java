@@ -2,12 +2,10 @@ package me.ivovk.connect_rpc_java.netty;
 
 import io.grpc.Metadata;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
-import io.netty.handler.codec.http.EmptyHttpHeaders;
 import io.netty.handler.codec.http.HttpHeaders;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 
 import java.util.function.Predicate;
-
 
 public class NettyHeaderMapping implements HeaderMapping<HttpHeaders> {
 
@@ -18,8 +16,7 @@ public class NettyHeaderMapping implements HeaderMapping<HttpHeaders> {
   public NettyHeaderMapping(
       Predicate<String> headersFilter,
       Predicate<String> metadataFilter,
-      Boolean treatTrailersAsHeaders
-  ) {
+      Boolean treatTrailersAsHeaders) {
     this.headersFilter = headersFilter;
     this.metadataFilter = metadataFilter;
     this.treatTrailersAsHeaders = treatTrailersAsHeaders;
@@ -42,12 +39,9 @@ public class NettyHeaderMapping implements HeaderMapping<HttpHeaders> {
   }
 
   private HttpHeaders headers(Metadata metadata, Boolean trailing) {
-    var keys = metadata.keys();
-    if (keys.isEmpty()) return EmptyHttpHeaders.INSTANCE;
-
     var headers = new DefaultHttpHeaders();
 
-    for (var k : keys) {
+    for (var k : metadata.keys()) {
       if (metadataFilter.test(k)) {
         var name = trailing ? "trailer-" + k : k;
 

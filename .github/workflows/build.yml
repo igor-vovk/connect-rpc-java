@@ -28,11 +28,18 @@ jobs:
       - name: Test
         run: ./gradlew test
 
-#      - name: Upload test reports
-#        uses: actions/upload-artifact@v3
-#        if: always()
-#        with:
-#          name: test-reports
-#          path: |
-#            **/build/reports/tests/
-#            **/build/reports/jacoco/
+  conformance:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        config:
+          - name: Netty
+            args: --build-arg config=suite-netty.yaml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run conformance tests for ${{ matrix.config.name }}
+        run: docker build -f conformance-build/Dockerfile . --progress=plain ${{ matrix.config.args }}

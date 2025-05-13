@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+
+<configuration>
+
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <file>${LOGS_PATH}/out.log</file>
+        <append>true</append>
+        <immediateFlush>true</immediateFlush>
+
+        <encoder>
+            <pattern>%-4relative %-5level %logger{35} -%kvp- %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="FILE"/>
+    </root>
+    <logger name="me.ivovk.connect_rpc_java" level="TRACE"/>
+</configuration>
