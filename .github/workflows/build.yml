@@ -36,6 +36,8 @@ jobs:
         config:
           - name: Netty
             args: --build-arg config=suite-netty.yaml
+          - name: Netty non-stable
+            args: --build-arg config=suite-netty-nonstable.yaml --build-arg stable=false
 
     steps:
       - name: Checkout repository
