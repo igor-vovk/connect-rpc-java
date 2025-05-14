@@ -3,7 +3,7 @@
 
 [versions]
 grpc = "1.72.0"
-junit = "5.11.1"
+junit = "5.12.2"
 netty = "4.2.1.Final"
 slf4j = "2.0.12"
 protobuf = "3.25.5"
