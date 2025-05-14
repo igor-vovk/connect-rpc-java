@@ -27,3 +27,4 @@ build
 .github/copilot-instructions.md
 
 out
+bin
