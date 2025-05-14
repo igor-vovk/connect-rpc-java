@@ -107,11 +107,11 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
 
       responseFuture.whenComplete(
           (response, error) -> {
-            if (error != null) {
+            if (error == null) {
+              ctx.writeAndFlush(response);
+            } else {
               logger.error("THIS SHOULD NOT HAPPEN!", error);
               sendError(ctx, error.getMessage(), HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            } else {
-              ctx.writeAndFlush(response);
             }
           });
     }

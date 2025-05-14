@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.util.concurrent.CompletionException;
 
 public class ConnectErrorHandler {
 
@@ -50,12 +51,18 @@ public class ConnectErrorHandler {
     var details = ErrorHandling.extractErrorDetails(e);
     var headers = headerMapping.trailersToHeaders(details.metadata());
     var httpResponseStatus = HttpResponseStatus.valueOf(details.httpStatusCode());
+
     if (logger.isTraceEnabled()) {
       logger.trace(
           "<<< HTTP status: {} ({}), Connect Error Code {}",
           details.httpStatusCode(),
           httpResponseStatus,
           details.error().getCode());
+
+      if (e instanceof CompletionException) {
+        e = e.getCause();
+      }
+
       logger.trace("<<< Error processing request", e);
     }
 
