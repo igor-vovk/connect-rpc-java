@@ -1,6 +1,6 @@
 package me.ivovk.connect_rpc_java.core.connect;
 
-import connectrpc.ErrorOuterClass;
+import connectrpc.Code;
 import io.grpc.Status;
 
 import java.util.Arrays;
@@ -8,13 +8,13 @@ import java.util.Arrays;
 public class StatusCodeMappings {
 
   private static final int[] HTTP_STATUS_CODES_BY_GRPC_CODE;
-  private static final ErrorOuterClass.Code[] CONNECT_STATUS_CODES_BY_GRPC_CODE;
+  private static final Code[] CONNECT_STATUS_CODES_BY_GRPC_CODE;
 
   static {
     int maxCode = Arrays.stream(Status.Code.values()).mapToInt(Status.Code::value).max().orElse(0);
 
     var httpStatusCodes = new int[maxCode + 1];
-    var connectStatusCodes = new ErrorOuterClass.Code[maxCode + 1];
+    var connectStatusCodes = new Code[maxCode + 1];
     for (Status.Code code : Status.Code.values()) {
       httpStatusCodes[code.value()] =
           switch (code) {
@@ -39,23 +39,23 @@ public class StatusCodeMappings {
 
       connectStatusCodes[code.value()] =
           switch (code) {
-            case CANCELLED -> ErrorOuterClass.Code.CODE_CANCELED;
-            case UNKNOWN -> ErrorOuterClass.Code.CODE_UNKNOWN;
-            case INVALID_ARGUMENT -> ErrorOuterClass.Code.CODE_INVALID_ARGUMENT;
-            case DEADLINE_EXCEEDED -> ErrorOuterClass.Code.CODE_DEADLINE_EXCEEDED;
-            case NOT_FOUND -> ErrorOuterClass.Code.CODE_NOT_FOUND;
-            case ALREADY_EXISTS -> ErrorOuterClass.Code.CODE_ALREADY_EXISTS;
-            case PERMISSION_DENIED -> ErrorOuterClass.Code.CODE_PERMISSION_DENIED;
-            case RESOURCE_EXHAUSTED -> ErrorOuterClass.Code.CODE_RESOURCE_EXHAUSTED;
-            case FAILED_PRECONDITION -> ErrorOuterClass.Code.CODE_FAILED_PRECONDITION;
-            case ABORTED -> ErrorOuterClass.Code.CODE_ABORTED;
-            case OUT_OF_RANGE -> ErrorOuterClass.Code.CODE_OUT_OF_RANGE;
-            case UNIMPLEMENTED -> ErrorOuterClass.Code.CODE_UNIMPLEMENTED;
-            case INTERNAL -> ErrorOuterClass.Code.CODE_INTERNAL;
-            case UNAVAILABLE -> ErrorOuterClass.Code.CODE_UNAVAILABLE;
-            case DATA_LOSS -> ErrorOuterClass.Code.CODE_DATA_LOSS;
-            case UNAUTHENTICATED -> ErrorOuterClass.Code.CODE_UNAUTHENTICATED;
-            default -> ErrorOuterClass.Code.CODE_INTERNAL;
+            case CANCELLED -> Code.CODE_CANCELED;
+            case UNKNOWN -> Code.CODE_UNKNOWN;
+            case INVALID_ARGUMENT -> Code.CODE_INVALID_ARGUMENT;
+            case DEADLINE_EXCEEDED -> Code.CODE_DEADLINE_EXCEEDED;
+            case NOT_FOUND -> Code.CODE_NOT_FOUND;
+            case ALREADY_EXISTS -> Code.CODE_ALREADY_EXISTS;
+            case PERMISSION_DENIED -> Code.CODE_PERMISSION_DENIED;
+            case RESOURCE_EXHAUSTED -> Code.CODE_RESOURCE_EXHAUSTED;
+            case FAILED_PRECONDITION -> Code.CODE_FAILED_PRECONDITION;
+            case ABORTED -> Code.CODE_ABORTED;
+            case OUT_OF_RANGE -> Code.CODE_OUT_OF_RANGE;
+            case UNIMPLEMENTED -> Code.CODE_UNIMPLEMENTED;
+            case INTERNAL -> Code.CODE_INTERNAL;
+            case UNAVAILABLE -> Code.CODE_UNAVAILABLE;
+            case DATA_LOSS -> Code.CODE_DATA_LOSS;
+            case UNAUTHENTICATED -> Code.CODE_UNAUTHENTICATED;
+            default -> Code.CODE_INTERNAL;
           };
     }
 
@@ -67,7 +67,7 @@ public class StatusCodeMappings {
     return HTTP_STATUS_CODES_BY_GRPC_CODE[code.value()];
   }
 
-  public static ErrorOuterClass.Code getConnectStatusCode(Status.Code code) {
+  public static Code getConnectStatusCode(Status.Code code) {
     return CONNECT_STATUS_CODES_BY_GRPC_CODE[code.value()];
   }
 }

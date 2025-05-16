@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package connectrpc.conformance.v1;
 
+option java_multiple_files = true;
+
 // Config defines the configuration for running conformance tests.
 // This enumerates all of the "flavors" of the test suite to run.
 message Config {

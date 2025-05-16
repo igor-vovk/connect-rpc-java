@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package connectrpc;
 
+option java_multiple_files = true;
+
 enum Code {
   CODE_UNSPECIFIED = 0;
   CODE_CANCELED = 1;

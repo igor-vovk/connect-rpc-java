@@ -1,6 +1,6 @@
 package me.ivovk.connect_rpc_java.netty.connect;
 
-import connectrpc.ErrorOuterClass;
+import connectrpc.Error;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponse;
@@ -19,25 +19,25 @@ import java.util.concurrent.CompletionException;
 
 public class ConnectErrorHandler {
 
-  private static final Marshaller<ErrorOuterClass.Error> PROTO_MARSHALLER =
+  private static final Marshaller<Error> PROTO_MARSHALLER =
       new Marshaller<>() {
         @Override
-        public InputStream stream(ErrorOuterClass.Error value) {
+        public InputStream stream(Error value) {
           return new ByteArrayInputStream(value.toByteArray());
         }
 
         @Override
-        public ErrorOuterClass.Error parse(InputStream stream) {
+        public Error parse(InputStream stream) {
           try {
-            return ErrorOuterClass.Error.parseFrom(stream);
+            return Error.parseFrom(stream);
           } catch (Exception e) {
             throw new RuntimeException("Failed to parse Error", e);
           }
         }
       };
 
-  private static final Marshaller<ErrorOuterClass.Error> JSON_MARSHALLER =
-      new JsonMarshallerFactory().jsonMarshaller(ErrorOuterClass.Error.getDefaultInstance());
+  private static final Marshaller<Error> JSON_MARSHALLER =
+      new JsonMarshallerFactory().jsonMarshaller(Error.getDefaultInstance());
 
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -66,7 +66,7 @@ public class ConnectErrorHandler {
       logger.trace("<<< Error processing request", e);
     }
 
-    Marshaller<ErrorOuterClass.Error> marshaller;
+    Marshaller<Error> marshaller;
     if (mediaType == MediaTypes.APPLICATION_JSON) {
       marshaller = JSON_MARSHALLER;
     } else if (mediaType == MediaTypes.APPLICATION_PROTO) {

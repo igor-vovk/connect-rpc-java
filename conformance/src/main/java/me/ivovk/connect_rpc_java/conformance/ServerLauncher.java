@@ -1,7 +1,6 @@
 package me.ivovk.connect_rpc_java.conformance;
 
-import connectrpc.conformance.v1.ServerCompat;
-import connectrpc.conformance.v1.Service;
+import connectrpc.conformance.v1.*;
 import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.ServerCompatSerDeser;
 import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
@@ -47,12 +46,11 @@ public class ServerLauncher {
                 b ->
                     b.add(
                         List.of(
-                            Service.UnaryRequest.getDescriptor(),
-                            Service.IdempotentUnaryRequest.getDescriptor())))
+                            UnaryRequest.getDescriptor(), IdempotentUnaryRequest.getDescriptor())))
             .build();
 
     var resp =
-        ServerCompat.ServerCompatResponse.newBuilder()
+        ServerCompatResponse.newBuilder()
             .setHost(server.getHost())
             .setPort(server.getPort())
             .build();
