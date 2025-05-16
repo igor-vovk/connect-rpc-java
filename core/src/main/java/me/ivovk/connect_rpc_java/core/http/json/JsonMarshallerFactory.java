@@ -8,7 +8,8 @@ import com.google.protobuf.TypeRegistry;
 import com.google.protobuf.util.JsonFormat;
 import com.google.protobuf.util.JsonFormat.Parser;
 import com.google.protobuf.util.JsonFormat.Printer;
-import connectrpc.ErrorOuterClass;
+import connectrpc.Error;
+import connectrpc.ErrorDetailsAny;
 import io.grpc.MethodDescriptor.Marshaller;
 import io.grpc.Status;
 
@@ -41,14 +42,13 @@ public class JsonMarshallerFactory {
 
     this.gson =
         new GsonBuilder()
-            .registerTypeAdapter(
-                ErrorOuterClass.ErrorDetailsAny.class, new ErrorDetailsAnySerializer())
-            .registerTypeAdapter(ErrorOuterClass.Error.class, new ConnectErrorSerializer())
+            .registerTypeAdapter(ErrorDetailsAny.class, new ErrorDetailsAnySerializer())
+            .registerTypeAdapter(Error.class, new ConnectErrorSerializer())
             .create();
   }
 
   public <T extends Message> Marshaller<T> jsonMarshaller(final T defaultInstance) {
-    if (defaultInstance instanceof ErrorOuterClass.Error) {
+    if (defaultInstance instanceof Error) {
       return marshallerUsingGson();
     } else {
       return marshallerUsingProtoJsonFormat(defaultInstance);

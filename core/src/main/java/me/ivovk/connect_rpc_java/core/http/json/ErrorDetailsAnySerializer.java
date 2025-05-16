@@ -1,7 +1,7 @@
 package me.ivovk.connect_rpc_java.core.http.json;
 
 import com.google.gson.*;
-import connectrpc.ErrorOuterClass.ErrorDetailsAny;
+import connectrpc.ErrorDetailsAny;
 
 import java.lang.reflect.Type;
 import java.util.Base64;

@@ -1,7 +1,7 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
 import com.google.protobuf.Message;
-import connectrpc.ErrorOuterClass.ErrorDetailsAny;
+import connectrpc.ErrorDetailsAny;
 import io.grpc.Metadata;
 
 import java.util.Optional;

@@ -16,6 +16,8 @@ syntax = "proto3";
 
 package connectrpc.conformance.v1;
 
+option java_multiple_files = true;
+
 import "connectrpc/conformance/v1/config.proto";
 
 // Describes one configuration for an RPC server. The server is

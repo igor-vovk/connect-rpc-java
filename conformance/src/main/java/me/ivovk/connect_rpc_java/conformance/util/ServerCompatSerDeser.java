@@ -1,7 +1,7 @@
 package me.ivovk.connect_rpc_java.conformance.util;
 
-import connectrpc.conformance.v1.ServerCompat.ServerCompatRequest;
-import connectrpc.conformance.v1.ServerCompat.ServerCompatResponse;
+import connectrpc.conformance.v1.ServerCompatRequest;
+import connectrpc.conformance.v1.ServerCompatResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
