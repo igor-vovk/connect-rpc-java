@@ -1,4 +1,6 @@
-import gradle.kotlin.dsl.accessors._276ae2cd150398d14500ae0f74d8ebdf.mavenPublishing
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SonatypeHost
 
 /*
  * Common conventions for Java libraries in Connect RPC Java
@@ -7,15 +9,47 @@ import gradle.kotlin.dsl.accessors._276ae2cd150398d14500ae0f74d8ebdf.mavenPublis
 plugins {
     id("connect.java-common-conventions")
     id("connect.code-quality-conventions")
-    `java-library`
     id("com.vanniktech.maven.publish")
-}
-
-java {
-    withJavadocJar()
-    withSourcesJar()
+    `java-library`
 }
 
 mavenPublishing {
+    configure(
+        JavaLibrary(
+            javadocJar = JavadocJar.None(),
+            sourcesJar = true,
+        )
+    )
 
+    publishToMavenCentral(SonatypeHost.CENTRAL_PORTAL)
+
+    signAllPublications()
+
+    coordinates(groupId = "me.ivovk.connect-rpc-java", "connect-rpc-java-library")
+
+    pom {
+        name.set("Connect RPC Java Library")
+        description.set("Connect RPC Java library")
+        inceptionYear.set("2025")
+        url.set("https://github.com/igor-vovk/connect-rpc-java")
+        licenses {
+            license {
+                name.set("The Apache Software License, Version 2.0")
+                url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                distribution.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("igor-vovk")
+                name.set("Ihor Vovk")
+                url.set("https://github.com/igor-vovk")
+            }
+        }
+        scm {
+            url.set("https://github.com/igor-vovk/connect-rpc-java")
+            connection.set("scm:git:git://github.com/igor-vovk/connect-rpc-java.git")
+            developerConnection.set("scm:git:ssh://git@github.com/igor-vovk/connect-rpc-java.git")
+        }
+    }
 }
