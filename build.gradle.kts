@@ -9,7 +9,18 @@ plugins {
     // Apply any other common plugins here
 }
 
-allprojects {
-    version = "0.1.0"
+fun getVersionFromFile(): String {
+    val versionFromFile = project.file("version.properties")
+
+    return if (versionFromFile.exists()) {
+        val props = java.util.Properties()
+        versionFromFile.inputStream().use(props::load)
+        props.getProperty("version")
+    } else {
+        "0.1.0-SNAPSHOT"
+    }
 }
 
+allprojects {
+    version = getVersionFromFile()
+}
