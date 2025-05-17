@@ -16,7 +16,7 @@ plugins {
 mavenPublishing {
     configure(
         JavaLibrary(
-            javadocJar = JavadocJar.None(),
+            javadocJar = JavadocJar.Empty(),
             sourcesJar = true,
         )
     )
@@ -25,7 +25,7 @@ mavenPublishing {
 
     signAllPublications()
 
-    coordinates(groupId = "me.ivovk.connect-rpc-java", "connect-rpc-java-library")
+    coordinates(groupId = "me.ivovk")
 
     pom {
         name.set("Connect RPC Java Library")
