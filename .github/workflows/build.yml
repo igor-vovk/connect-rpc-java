@@ -26,11 +26,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build
-        run: gradle build
-
-      - name: Test
-        run: gradle test
+      - name: Build and Test
+        run: gradle build test
 
   conformance:
     name: Conformance Tests
