@@ -69,13 +69,13 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-        with:
-          build-scan-publish: true
-          build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
-          build-scan-terms-of-use-agree: 'yes'
+        #with:
+        #  build-scan-publish: true
+        #  build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
+        #  build-scan-terms-of-use-agree: 'yes'
 
       - name: Publish to Maven Central
-        run: gradle publish --scan --no-configuration-cache
+        run: gradle publish --no-configuration-cache #--scan
 
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
