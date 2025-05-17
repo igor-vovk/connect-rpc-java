@@ -5,6 +5,14 @@ plugins {
     id("connect.protobuf-conventions")
 }
 
+mavenPublishing {
+    coordinates(artifactId = "connect-rpc-java-core")
+    pom {
+        name.set("Connect RPC Java Core")
+        description.set("Core library for Connect RPC Java")
+    }
+}
+
 protobuf {
     generateProtoTasks {
         all().forEach {
