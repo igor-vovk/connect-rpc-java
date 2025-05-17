@@ -18,10 +18,10 @@ repositories {
     // Use the plugin portal to apply community plugins in convention plugins.
     gradlePluginPortal()
     mavenCentral()
-    google()
 }
 
 dependencies {
     implementation("com.google.protobuf:protobuf-gradle-plugin:0.9.5")
     implementation("com.diffplug.spotless:spotless-plugin-gradle:7.0.3")
+    implementation("com.vanniktech:gradle-maven-publish-plugin:0.32.0")
 }

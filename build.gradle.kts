@@ -9,12 +9,18 @@ plugins {
     // Apply any other common plugins here
 }
 
-allprojects {
-    group = "me.ivovk"
-    version = "0.1.0-SNAPSHOT"
+fun getVersionFromFile(): String {
+    val versionFromFile = project.file("version.properties")
+
+    return if (versionFromFile.exists()) {
+        val props = java.util.Properties()
+        versionFromFile.inputStream().use(props::load)
+        props.getProperty("version")
+    } else {
+        "0.1.0-SNAPSHOT"
+    }
 }
 
-tasks.wrapper {
-    gradleVersion = "8.6"
-    distributionType = Wrapper.DistributionType.ALL
+allprojects {
+    version = getVersionFromFile()
 }

@@ -2,7 +2,9 @@ import com.google.protobuf.gradle.*
 
 plugins {
     application
-    id("connect.library-conventions")
+    `java-library`
+    id("connect.java-common-conventions")
+    id("connect.code-quality-conventions")
     id("connect.protobuf-conventions")
 }
 

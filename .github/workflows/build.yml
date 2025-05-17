@@ -1,4 +1,4 @@
-name: Build and Test
+name: Java CI
 
 on:
   push:
@@ -6,9 +6,13 @@ on:
   pull_request:
     branches: [ "**" ]
 
+permissions:
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    name: Build and Test
 
     steps:
       - uses: actions/checkout@v4
@@ -22,13 +26,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Build
-        run: ./gradlew build
-
-      - name: Test
-        run: ./gradlew test
+      - name: Build and Test
+        run: gradle build test
 
   conformance:
+    name: Conformance Tests
     runs-on: ubuntu-latest
 
     strategy:
