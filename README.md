@@ -144,3 +144,9 @@ Diagnostic data from the server itself is written to the log file `out/out.log`.
 * Original `User-Agent` request header is renamed to `x-user-agent`,
   `user-agent` is set to the in-process client's User Agent (`grpc-java-inprocess/1.69.0`),
   there is no way to disable it.
+
+## Links
+
+* [Connect RPC website](https://connectrpc.com)
+* [Connect RPC Java library](https://github.com/igor-vovk/connect-rpc-java/)
+* [Connect RPC Scala library](https://github.com/igor-vovk/connect-rpc-scala)
