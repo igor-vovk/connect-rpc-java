@@ -75,7 +75,7 @@ jobs:
           build-scan-terms-of-use-agree: 'yes'
 
       - name: Publish to Maven Central
-        run: gradle publish --scan
+        run: gradle publish --scan --no-configuration-cache
 
         env:
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
