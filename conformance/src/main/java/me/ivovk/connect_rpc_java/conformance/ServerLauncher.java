@@ -4,6 +4,7 @@ import connectrpc.conformance.v1.*;
 import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.ServerCompatSerDeser;
 import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
+import me.ivovk.connect_rpc_java.netty.util.NettyLeakDetectorFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +29,8 @@ public class ServerLauncher {
   private static final Logger logger = LoggerFactory.getLogger(ServerLauncher.class);
 
   public static void main(String[] args) throws Exception {
+    NettyLeakDetectorFactory.use();
+
     var req = ServerCompatSerDeser.readRequest(System.in);
 
     var service = new ConformanceServiceImpl();
@@ -60,6 +63,19 @@ public class ServerLauncher {
     System.err.println("Netty Server started on " + server.getHost() + ":" + server.getPort());
     logger.info("Netty Server started on {}:{}", server.getHost(), server.getPort());
 
-    Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  System.gc();
+                  System.runFinalization();
+                  try {
+                    Thread.sleep(1000);
+                  } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                  }
+
+                  server.shutdown();
+                }));
   }
 }
