@@ -25,4 +25,4 @@ javax-annotation = { module = "javax.annotation:javax.annotation-api", version =
 
 [plugins]
 protobuf = { id = "com.google.protobuf", version = "0.9.5" }
-spotless = { id = "com.diffplug.spotless", version = "7.0.3" }
+spotless = { id = "com.diffplug.spotless", version = "7.0.4" }
