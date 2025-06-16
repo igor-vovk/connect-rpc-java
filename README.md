@@ -43,83 +43,56 @@ HTTP/1.1 200 OK
 It is compatible with Connect protocol clients (e.g., generated with [Connect RPC](https://connectrpc.com) `protoc` and
 `buf` plugins).
 
-In addition, the library allows creating free-form REST APIs
-using [GRPC Transcoding](https://cloud.google.com/endpoints/docs/grpc/transcoding) approach (based on `google.api.http`
-annotations that can be added to methods):
+## Use cases
 
-```protobuf
-syntax = "proto3";
+* Expose existing GRPC services as REST APIs without modifying the original service code alongside GRPC. GRPC services
+  are used for internal communication, while REST APIs are used for external clients.
+* Fully switch GRPC servers and clients to ConnectRPC protocol, while keeping the original GRPC service interfaces.
+* Build from scratch using Connect RPC instead of GRPC, but still use the same service interfaces.
 
-package example;
-
-import "google/api/annotations.proto";
-
-service ExampleService {
-  rpc GetExample(GetExampleRequest) returns (GetExampleResponse) {
-    option (google.api.http) = {
-      get: "/example/{id}"
-    };
-  }
-}
-
-message GetExampleRequest {
-  string id = 1;
-}
-
-message GetExampleResponse {
-  string name = 1;
-}
-```
-
-In addition to the previous way of execution, such endpoints are exposed in a more RESTful way:
-
-```http
-GET /example/123 HTTP/1.1
-
-HTTP/1.1 200 OK
-
-{
-  "name": "example"
-}
-```
-
----
 ## Usage
 
 ![Maven Central](https://img.shields.io/maven-central/v/me.ivovk/connect-rpc-java-netty?style=flat-square&color=green)
 
 Dependency for Maven:
+
 ```xml
+
 <dependency>
-  <groupId>me.ivovk</groupId>
-  <artifactId>connect-rpc-java-netty</artifactId>
-  <version>${connect-rpc-java.version}</version>
+    <groupId>me.ivovk</groupId>
+    <artifactId>connect-rpc-java-netty</artifactId>
+    <version>${connect-rpc-java.version}</version>
 </dependency>
 ```
 
 and for Gradle:
+
 ```
 "me.ivovk:connect-rpc-java-netty:${connect-rpc-java.version}"
 ```
 
-The entry point that allows the server to be started is `NettyServerBuilder`class:
+The entry point that allows the server to be started is `ConnectNettyServerBuilder`class:
 
 ```java
-import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
+import me.ivovk.connect_rpc_java.netty.ConnectNettyServerBuilder;
 
 // Your GRPC service(s)
 List<io.grpc.ServiceDefinition> grpcServices = List.of(
     ExampleServiceGrpc.getServiceDefinition()
 );
 
-// Start the server
-NettyServer server = NettyServerBuilder
+    // Start the server
+    var server = ConnectNettyServerBuilder
         .forServices(grpcServices)
         .port(8080)
         .build();
 
 // Stop the server
-Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
+Runtime.
+
+    getRuntime().
+
+    addShutdownHook(new Thread(server::shutdown));
 ```
 
 ## Development

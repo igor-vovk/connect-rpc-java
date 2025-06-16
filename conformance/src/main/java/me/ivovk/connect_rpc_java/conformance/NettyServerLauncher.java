@@ -3,7 +3,7 @@ package me.ivovk.connect_rpc_java.conformance;
 import connectrpc.conformance.v1.*;
 import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.LengthPrefixedProtoSerde;
-import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
+import me.ivovk.connect_rpc_java.netty.ConnectNettyServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,9 +23,9 @@ import java.util.List;
  * <p><a
  * href="https://github.com/connectrpc/conformance/blob/main/docs/configuring_and_running_tests.md">...</a>
  */
-public class ServerLauncher {
+public class NettyServerLauncher {
 
-  private static final Logger logger = LoggerFactory.getLogger(ServerLauncher.class);
+  private static final Logger logger = LoggerFactory.getLogger(NettyServerLauncher.class);
 
   public static void main(String[] args) throws Exception {
     var serde = LengthPrefixedProtoSerde.forSystemInOut();
@@ -34,7 +34,7 @@ public class ServerLauncher {
     var service = new ConformanceServiceImpl();
 
     var server =
-        NettyServerBuilder.forServices(service)
+        ConnectNettyServerBuilder.forServices(service)
             .serverBuilderConfigurer(
                 sb -> {
                   // sb.intercept(new ErrorLoggingInterceptor());
