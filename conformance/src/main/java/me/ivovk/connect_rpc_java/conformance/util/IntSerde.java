@@ -5,11 +5,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-public class IntSerDeser {
+public class IntSerde {
 
   private static final int INT_SIZE = 4;
 
-  private IntSerDeser() {}
+  private IntSerde() {}
 
   public static int read(InputStream in) throws IOException {
     return ByteBuffer.wrap(in.readNBytes(INT_SIZE)).getInt();

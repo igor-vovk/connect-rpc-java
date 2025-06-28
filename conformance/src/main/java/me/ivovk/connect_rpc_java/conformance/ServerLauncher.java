@@ -2,7 +2,7 @@ package me.ivovk.connect_rpc_java.conformance;
 
 import connectrpc.conformance.v1.*;
 import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataInterceptor;
-import me.ivovk.connect_rpc_java.conformance.util.ServerCompatSerDeser;
+import me.ivovk.connect_rpc_java.conformance.util.LengthPrefixedProtoSerde;
 import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +28,8 @@ public class ServerLauncher {
   private static final Logger logger = LoggerFactory.getLogger(ServerLauncher.class);
 
   public static void main(String[] args) throws Exception {
-    var req = ServerCompatSerDeser.readRequest(System.in);
+    var serde = LengthPrefixedProtoSerde.forSystemInOut();
+    var req = serde.read(ServerCompatRequest.parser());
 
     var service = new ConformanceServiceImpl();
 
@@ -55,7 +56,7 @@ public class ServerLauncher {
             .setPort(server.getPort())
             .build();
 
-    ServerCompatSerDeser.writeResponse(System.out, resp);
+    serde.write(resp);
 
     System.err.println("Netty Server started on " + server.getHost() + ":" + server.getPort());
     logger.info("Netty Server started on {}:{}", server.getHost(), server.getPort());
