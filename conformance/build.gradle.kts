@@ -20,7 +20,7 @@ protobuf {
 
 application {
     version = "1.0.0"
-    mainClass = "me.ivovk.connect_rpc_java.conformance.NettyServerLauncher"
+    mainClass = "me.ivovk.connect_rpc_java.conformance.Launcher"
 }
 
 dependencies {

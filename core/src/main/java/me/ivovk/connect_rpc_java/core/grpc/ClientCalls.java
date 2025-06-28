@@ -6,55 +6,56 @@ import java.util.concurrent.CompletableFuture;
 
 public class ClientCalls {
 
-  public record Response<T>(T message, Metadata headerMetadata, Metadata trailerMetadata) {}
+  public record Response<T>(Metadata headers, T value, Metadata trailers) {}
 
-  public static <ReqT, RespT> CompletableFuture<Response<RespT>> asyncUnaryCall(
-      ClientCall<ReqT, RespT> call, Metadata headers, ReqT request) {
-    var listener = new CompletableFutureListener<RespT>();
+  public static <Req, Resp> CompletableFuture<Response<Resp>> unaryCall(
+      Channel channel,
+      MethodDescriptor<Req, Resp> method,
+      CallOptions options,
+      Metadata headers,
+      Req request) {
+    var call = channel.newCall(method, options);
+    var future = new CompletableFuture<Response<Resp>>();
+
+    var listener =
+        new ClientCall.Listener<Resp>() {
+          private Metadata headers;
+          private Resp message;
+
+          @Override
+          public void onHeaders(Metadata headers) {
+            this.headers = headers;
+          }
+
+          @Override
+          public void onMessage(Resp message) {
+            if (this.message != null) {
+              future.completeExceptionally(
+                  new IllegalStateException("More than one message received"));
+            }
+            this.message = message;
+          }
+
+          @Override
+          public void onClose(Status status, Metadata trailers) {
+            if (status.isOk()) {
+              if (message != null) {
+                future.complete(new Response<>(headers, message, trailers));
+              } else {
+                future.completeExceptionally(new IllegalStateException("No value received"));
+              }
+            } else {
+              future.completeExceptionally(status.asException());
+            }
+          }
+        };
 
     call.start(listener, headers);
     call.sendMessage(request);
-
     call.halfClose();
-
-    // request 2 messages to catch a case when a server sends more than one message
+    // Request 2 messages to catch a case where a server sends more than one message
     call.request(2);
 
-    return listener.getResponse();
-  }
-
-  private static class CompletableFutureListener<RespT> extends ClientCall.Listener<RespT> {
-
-    private final CompletableFuture<Response<RespT>> responseFuture = new CompletableFuture<>();
-
-    private Metadata headers = null;
-    private RespT message = null;
-
-    @Override
-    public void onHeaders(Metadata headers) {
-      this.headers = headers;
-    }
-
-    @Override
-    public void onMessage(RespT message) {
-      if (this.message != null) {
-        throw new IllegalStateException("More than one message received");
-      }
-
-      this.message = message;
-    }
-
-    @Override
-    public void onClose(Status status, Metadata trailers) {
-      if (status.isOk()) {
-        responseFuture.complete(new Response<>(message, headers, trailers));
-      } else {
-        responseFuture.completeExceptionally(status.asRuntimeException(trailers));
-      }
-    }
-
-    public CompletableFuture<Response<RespT>> getResponse() {
-      return responseFuture;
-    }
+    return future;
   }
 }

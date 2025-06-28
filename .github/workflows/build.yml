@@ -37,13 +37,15 @@ jobs:
       matrix:
         config:
           - name: Netty
-            args: --build-arg config=suite-netty.yaml
+            profile: netty-server
           - name: Netty non-stable
-            args: --build-arg config=suite-netty-nonstable.yaml --build-arg stable=false
+            profile: netty-server-nonstable
+          - name: Netty client
+            profile: netty-client
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run conformance tests for ${{ matrix.config.name }}
-        run: docker build -f conformance-build/Dockerfile . --progress=plain ${{ matrix.config.args }}
+        run: make test-conformance PROFILE=${{ matrix.config.profile }}
