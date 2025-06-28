@@ -69,17 +69,18 @@ public class ConnectHandler {
 
     var call = channel.newCall(method.descriptor(), callOptions);
 
-    return ClientCalls.asyncUnaryCall(call, request.headerMetadata(), request.message())
+    return ClientCalls.unaryCall(
+            channel, method.descriptor(), callOptions, request.headerMetadata(), request.message())
         .thenApply(
             response -> {
               var httpHeaders =
                   headerMapping
-                      .toHeaders(response.headerMetadata())
-                      .add(headerMapping.trailersToHeaders(response.trailerMetadata()))
+                      .toHeaders(response.headers())
+                      .add(headerMapping.trailersToHeaders(response.trailers()))
                       .add(HttpHeaderNames.CONTENT_TYPE, request.mediaType().toString());
 
               return Response.create(
-                  response.message(), method.responseMarshaller(request.mediaType()), httpHeaders);
+                  response.value(), method.responseMarshaller(request.mediaType()), httpHeaders);
             });
   }
 }

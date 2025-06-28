@@ -29,6 +29,7 @@ public class NettyServerLauncher {
 
   public static void main(String[] args) throws Exception {
     var serde = LengthPrefixedProtoSerde.forSystemInOut();
+    // Must read the request from STDIN, even though it is not used.
     var req = serde.read(ServerCompatRequest.parser());
 
     var service = new ConformanceServiceImpl();

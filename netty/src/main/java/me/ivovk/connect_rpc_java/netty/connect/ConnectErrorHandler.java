@@ -48,8 +48,8 @@ public class ConnectErrorHandler {
   }
 
   public HttpResponse handle(Throwable e, MediaTypes.MediaType mediaType) {
-    var details = ErrorHandling.extractErrorDetails(e);
-    var headers = headerMapping.trailersToHeaders(details.metadata());
+    var details = ErrorHandling.extractDetails(e);
+    var headers = headerMapping.trailersToHeaders(details.trailers());
     var httpResponseStatus = HttpResponseStatus.valueOf(details.httpStatusCode());
 
     if (logger.isTraceEnabled()) {
