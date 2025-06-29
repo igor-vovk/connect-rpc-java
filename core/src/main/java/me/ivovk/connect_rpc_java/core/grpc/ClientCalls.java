@@ -8,7 +8,19 @@ public class ClientCalls {
 
   public record Response<T>(Metadata headers, T value, Metadata trailers) {}
 
+  public record CallResult<Req, Resp>(
+      ClientCall<Req, Resp> call, CompletableFuture<Response<Resp>> future) {}
+
   public static <Req, Resp> CompletableFuture<Response<Resp>> unaryCall(
+      Channel channel,
+      MethodDescriptor<Req, Resp> method,
+      CallOptions options,
+      Metadata headers,
+      Req request) {
+    return unaryCall2(channel, method, options, headers, request).future();
+  }
+
+  public static <Req, Resp> CallResult<Req, Resp> unaryCall2(
       Channel channel,
       MethodDescriptor<Req, Resp> method,
       CallOptions options,
@@ -45,7 +57,8 @@ public class ClientCalls {
                 future.completeExceptionally(new IllegalStateException("No value received"));
               }
             } else {
-              future.completeExceptionally(status.asException());
+              future.completeExceptionally(
+                  new StatusExceptionWithHeaders(status, headers, trailers));
             }
           }
         };
@@ -56,6 +69,6 @@ public class ClientCalls {
     // Request 2 messages to catch a case where a server sends more than one message
     call.request(2);
 
-    return future;
+    return new CallResult<>(call, future);
   }
 }
