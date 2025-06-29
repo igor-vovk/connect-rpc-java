@@ -36,9 +36,9 @@ jobs:
     strategy:
       matrix:
         config:
-          - name: Netty
+          - name: Netty server
             profile: netty-server
-          - name: Netty non-stable
+          - name: Netty server non-stable
             profile: netty-server-nonstable
           - name: Netty client
             profile: netty-client

@@ -81,18 +81,14 @@ List<io.grpc.ServiceDefinition> grpcServices = List.of(
     ExampleServiceGrpc.getServiceDefinition()
 );
 
-    // Start the server
-    var server = ConnectNettyServerBuilder
-        .forServices(grpcServices)
-        .port(8080)
-        .build();
+// Start the server
+var server = ConnectNettyServerBuilder
+    .forServices(grpcServices)
+    .port(8080)
+    .build();
 
 // Stop the server
-Runtime.
-
-    getRuntime().
-
-    addShutdownHook(new Thread(server::shutdown));
+Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 ```
 
 ## Development
@@ -104,7 +100,7 @@ Runtime.
 Run the following command to run Connect-RPC conformance tests:
 
 ```shell
-docker build -f conformance-build/Dockerfile . --progress=plain --output "out" --build-arg config=suite-netty.yaml
+make test-conformance profile=netty-server
 ```
 
 Execution results are output to STDOUT.
