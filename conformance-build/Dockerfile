@@ -23,14 +23,15 @@ RUN mkdir "/logs"
 
 ARG config="suite.yaml"
 ARG stable="true"
+ARG mode="server"
+ARG launcher
 
 # Run stable tests first
 RUN echo ">>>>> Running stable tests <<<<<"
-RUN LOGS_PATH="/logs" \
+RUN LOGS_PATH="/logs" LAUNCHER="$launcher" \
     ./connectconformance \
     --conf $config \
-    --mode server \
-    --parallel 1 \
+    --mode $mode \
     -v -vv --trace \
     -- \
     /app/bin/conformance; \
