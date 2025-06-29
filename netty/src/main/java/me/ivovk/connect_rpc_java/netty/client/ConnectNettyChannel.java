@@ -1,5 +1,7 @@
 package me.ivovk.connect_rpc_java.netty.client;
 
+import static io.netty.util.CharsetUtil.UTF_8;
+
 import com.google.protobuf.Message;
 import io.grpc.*;
 import io.grpc.Channel;
@@ -57,7 +59,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
     }
 
     @Override
-    public void start(Listener<Resp> listener, Metadata metadata) {
+    public void start(Listener<Resp> responseListener, Metadata metadata) {
       this.metadata = metadata;
 
       Bootstrap b = new Bootstrap();
@@ -73,7 +75,10 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
                       .addLast(new HttpObjectAggregator(1048576))
                       .addLast(
                           new ConnectRpcClientHandler<>(
-                              methodDescriptor, headerMapping, jsonMarshallerFactory, listener));
+                              methodDescriptor,
+                              headerMapping,
+                              jsonMarshallerFactory,
+                              responseListener));
                 }
               });
 
@@ -84,7 +89,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
             if (future.isSuccess()) {
               maybeSendRequest();
             } else {
-              listener.onClose(Status.fromThrowable(future.cause()), new Metadata());
+              responseListener.onClose(Status.fromThrowable(future.cause()), new Metadata());
             }
           });
     }
@@ -143,9 +148,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
 
         if (logger.isDebugEnabled()) {
           logger.trace(">>> Request headers: {}", headers);
-          logger.debug(
-              ">>> Request content: {}",
-              httpRequest.content().toString(io.netty.util.CharsetUtil.UTF_8));
+          logger.debug(">>> Request content: {}", httpRequest.content().toString(UTF_8));
         }
 
         nettyChannel.writeAndFlush(httpRequest);
