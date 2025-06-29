@@ -69,9 +69,17 @@ public class JsonMarshallerFactory {
         }
       }
 
+      @SuppressWarnings("unchecked")
       @Override
       public T parse(InputStream stream) {
-        throw new RuntimeException("Not implemented");
+        try (var reader = new InputStreamReader(stream, charset)) {
+          return (T) gson.fromJson(reader, Error.class);
+        } catch (IOException e) {
+          throw Status.INTERNAL
+              .withDescription("Unable to parse json")
+              .withCause(e)
+              .asRuntimeException();
+        }
       }
     };
   }

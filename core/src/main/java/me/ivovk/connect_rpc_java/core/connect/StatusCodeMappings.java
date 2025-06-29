@@ -8,26 +8,36 @@ public class StatusCodeMappings {
   public static int toHttpStatusCode(Status status) {
     return switch (status.getCode()) {
       case OK -> 200;
-      case CANCELLED -> 408;
-      case UNKNOWN -> 500;
-      case INVALID_ARGUMENT -> 400;
-      case DEADLINE_EXCEEDED -> 408;
+      case CANCELLED, DEADLINE_EXCEEDED -> 408;
+      case UNKNOWN, INTERNAL, DATA_LOSS -> 500;
+      case INVALID_ARGUMENT, FAILED_PRECONDITION, OUT_OF_RANGE -> 400;
       case NOT_FOUND -> 404;
-      case ALREADY_EXISTS -> 409;
+      case ALREADY_EXISTS, ABORTED -> 409;
       case PERMISSION_DENIED -> 403;
       case UNAUTHENTICATED -> 401;
       case RESOURCE_EXHAUSTED -> 429;
-      case FAILED_PRECONDITION -> 400;
-      case ABORTED -> 409;
-      case OUT_OF_RANGE -> 400;
       case UNIMPLEMENTED -> 501;
-      case INTERNAL -> 500;
       case UNAVAILABLE -> 503;
-      case DATA_LOSS -> 500;
     };
   }
 
-  public static Code toConnectCode(Status status) {
+  public static Status toGrpcStatus(int httpCode) {
+    return switch (httpCode) {
+      case 200 -> Status.OK;
+      case 400, 500 -> Status.INTERNAL;
+      case 401 -> Status.UNAUTHENTICATED;
+      case 403 -> Status.PERMISSION_DENIED;
+      case 404, 501 -> Status.UNIMPLEMENTED;
+      case 409 -> Status.UNKNOWN;
+      case 429, 504, 503, 502 -> Status.UNAVAILABLE;
+      case 499 -> Status.CANCELLED;
+      default ->
+          Status.UNKNOWN.withDescription(
+              "HTTP status code " + httpCode + " is not supported by the protocol");
+    };
+  }
+
+  public static connectrpc.Code toConnectCode(Status status) {
     return switch (status.getCode()) {
       case OK -> Code.CODE_UNSPECIFIED;
       case CANCELLED -> Code.CODE_CANCELED;

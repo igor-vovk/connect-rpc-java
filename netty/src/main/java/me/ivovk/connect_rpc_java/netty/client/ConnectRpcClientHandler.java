@@ -1,5 +1,6 @@
 package me.ivovk.connect_rpc_java.netty.client;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
@@ -10,6 +11,8 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpStatusClass;
+import me.ivovk.connect_rpc_java.core.connect.StatusCodeMappings;
 import me.ivovk.connect_rpc_java.core.grpc.GrpcHeaders;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
@@ -17,27 +20,29 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 
 public class ConnectRpcClientHandler<Resp extends Message>
     extends SimpleChannelInboundHandler<HttpObject> {
 
+  private static final InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
   private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final MethodDescriptor<?, Resp> methodDescriptor;
   private final HeaderMapping<HttpHeaders> headerMapping;
   private final JsonMarshallerFactory marshallerFactory;
-  private final ClientCall.Listener<Resp> listener;
+  private final ClientCall.Listener<Resp> responseListener;
 
   public ConnectRpcClientHandler(
       MethodDescriptor<?, Resp> methodDescriptor,
       HeaderMapping<HttpHeaders> headerMapping,
       JsonMarshallerFactory marshallerFactory,
-      ClientCall.Listener<Resp> listener) {
+      ClientCall.Listener<Resp> responseListener) {
     this.methodDescriptor = methodDescriptor;
     this.headerMapping = headerMapping;
     this.marshallerFactory = marshallerFactory;
-    this.listener = listener;
+    this.responseListener = responseListener;
   }
 
   @Override
@@ -49,25 +54,49 @@ public class ConnectRpcClientHandler<Resp extends Message>
             "<<< Response content: {}", httpResponse.content().toString(Charset.defaultCharset()));
       }
       var metadata = headerMapping.toMetadata(httpResponse.headers());
-      var headersAndTrailers = GrpcHeaders.splitIntoHeadersAndTrailers(metadata);
+      var hat = GrpcHeaders.splitIntoHeadersAndTrailers(metadata);
 
-      listener.onHeaders(headersAndTrailers.headers());
+      responseListener.onHeaders(hat.headers());
 
-      if (httpResponse.status().code() >= 200 && httpResponse.status().code() < 300) {
-        Resp defaultMessage =
-            methodDescriptor.getResponseMarshaller().parse(new ByteArrayInputStream(new byte[0]));
-        Resp responseMessage =
-            marshallerFactory
-                .jsonMarshaller(defaultMessage)
-                .parse(new ByteBufInputStream(httpResponse.content(), false));
+      var responseStatus = httpResponse.status();
+      var responseContentStream = new ByteBufInputStream(httpResponse.content(), false);
 
-        listener.onMessage(responseMessage);
-        listener.onClose(Status.OK, headersAndTrailers.trailers());
+      if (responseStatus.codeClass() == HttpStatusClass.SUCCESS) {
+        var defaultMessage = methodDescriptor.getResponseMarshaller().parse(EMPTY_STREAM);
+        var responseMessage =
+            marshallerFactory.jsonMarshaller(defaultMessage).parse(responseContentStream);
+
+        responseListener.onMessage(responseMessage);
+        responseListener.onClose(Status.OK, hat.trailers());
       } else {
-        listener.onClose(
-            Status.fromCodeValue(httpResponse.status().code())
-                .withDescription(httpResponse.status().reasonPhrase()),
-            headersAndTrailers.trailers());
+        var error =
+            marshallerFactory
+                .jsonMarshaller(connectrpc.Error.getDefaultInstance())
+                .parse(responseContentStream);
+
+        if (logger.isTraceEnabled()) {
+          logger.trace("<<< Received error response: {}", error);
+        }
+
+        var status =
+            (error == null || error.getCode() == connectrpc.Code.CODE_UNSPECIFIED)
+                ? StatusCodeMappings.toGrpcStatus(responseStatus.code())
+                : Status.fromCodeValue(error.getCode().getNumber())
+                    .withDescription(error.getMessage());
+
+        if (error != null && error.getDetailsCount() > 0) {
+          var details = error.getDetails(0);
+
+          hat.trailers()
+              .put(
+                  GrpcHeaders.ERROR_DETAILS_KEY,
+                  Any.newBuilder()
+                      .setTypeUrl(details.getType())
+                      .setValue(details.getValue())
+                      .build());
+        }
+
+        responseListener.onClose(status, hat.trailers());
       }
 
       ctx.close();
@@ -76,7 +105,7 @@ public class ConnectRpcClientHandler<Resp extends Message>
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-    listener.onClose(Status.fromThrowable(cause), Status.trailersFromThrowable(cause));
+    responseListener.onClose(Status.fromThrowable(cause), Status.trailersFromThrowable(cause));
     ctx.close();
   }
 }

@@ -1,7 +1,5 @@
 package me.ivovk.connect_rpc_java.core.connect;
 
-import static java.util.Objects.requireNonNull;
-
 import connectrpc.ErrorDetailsAny;
 import io.grpc.Metadata;
 import io.grpc.Status;
@@ -16,30 +14,43 @@ public class ErrorHandling {
       int httpStatusCode, connectrpc.Error error, Metadata headers, Metadata trailers) {}
 
   public static ErrorDetails extractDetails(Throwable e) {
-    Status grpcStatus;
-    Metadata headers;
-    Metadata trailers;
-    String message;
+    Status grpcStatus = Status.INTERNAL;
+    Metadata headers = new Metadata();
+    Metadata trailers = new Metadata();
+    String message = e.getMessage();
 
-    if (e instanceof StatusException se) {
-      grpcStatus = se.getStatus();
-      if (se instanceof StatusExceptionWithHeaders seh) {
-        headers = seh.getHeaders();
-      } else {
-        headers = new Metadata();
+    Throwable cause = e;
+    while (cause != null) {
+      if (cause instanceof StatusException se) {
+        grpcStatus = se.getStatus();
+        if (se instanceof StatusExceptionWithHeaders seh) {
+          headers = seh.getHeaders();
+        }
+        if (se.getTrailers() != null) {
+          trailers = se.getTrailers();
+        }
+        if (grpcStatus.getDescription() != null) {
+          message = grpcStatus.getDescription();
+        } else if (se.getMessage() != null) {
+          message = se.getMessage();
+        }
+
+        break;
+      } else if (cause instanceof StatusRuntimeException sre) {
+        grpcStatus = sre.getStatus();
+        if (sre.getTrailers() != null) {
+          trailers = sre.getTrailers();
+        }
+        if (grpcStatus.getDescription() != null) {
+          message = grpcStatus.getDescription();
+        } else if (sre.getMessage() != null) {
+          message = sre.getMessage();
+        }
+
+        break;
       }
-      trailers = requireNonNull(se.getTrailers());
-      message = se.getStatus().getDescription();
-    } else if (e instanceof StatusRuntimeException sre) {
-      grpcStatus = sre.getStatus();
-      headers = new Metadata();
-      trailers = requireNonNull(sre.getTrailers());
-      message = sre.getStatus().getDescription();
-    } else {
-      grpcStatus = Status.INTERNAL;
-      headers = new Metadata();
-      trailers = new Metadata();
-      message = e.getMessage();
+
+      cause = cause.getCause();
     }
 
     var errorBuilder =
@@ -48,13 +59,15 @@ public class ErrorHandling {
             .setMessage(message);
 
     // Extract details from trailers if present
-    var errorDetails = trailers.get(GrpcHeaders.ERROR_DETAILS_KEY);
+    var errorDetails = trailers.removeAll(GrpcHeaders.ERROR_DETAILS_KEY);
     if (errorDetails != null) {
-      errorBuilder.addDetails(
-          ErrorDetailsAny.newBuilder()
-              .setType(errorDetails.getTypeUrl().replace("type.googleapis.com/", ""))
-              .setValue(errorDetails.getValue())
-              .build());
+      for (var errorDetail : errorDetails) {
+        errorBuilder.addDetails(
+            ErrorDetailsAny.newBuilder()
+                .setType(errorDetail.getTypeUrl().replace("type.googleapis.com/", ""))
+                .setValue(errorDetail.getValue())
+                .build());
+      }
     }
 
     return new ErrorDetails(
