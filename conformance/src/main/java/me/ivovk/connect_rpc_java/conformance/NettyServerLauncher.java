@@ -7,8 +7,6 @@ import me.ivovk.connect_rpc_java.netty.ConnectNettyServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 /**
  * Flow:
  *
@@ -46,9 +44,7 @@ public class NettyServerLauncher {
             // JSON-serialization conformance tests
             .jsonTypeRegistryConfigurer(
                 b ->
-                    b.add(
-                        List.of(
-                            UnaryRequest.getDescriptor(), IdempotentUnaryRequest.getDescriptor())))
+                    b.add(UnaryRequest.getDescriptor()).add(IdempotentUnaryRequest.getDescriptor()))
             .build();
 
     var resp =
