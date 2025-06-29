@@ -17,7 +17,6 @@ import me.ivovk.connect_rpc_java.netty.client.ConnectNettyChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -42,20 +41,17 @@ public class NettyClientLauncher {
         serde.write(response);
       } catch (Throwable t) {
         logger.error("Error running test case", t);
-        try {
-          var clientError =
-              ClientErrorResult.newBuilder()
-                  .setMessage("Error running conformance test: " + t.getMessage())
-                  .build();
 
-          serde.write(
-              ClientCompatResponse.newBuilder()
-                  .setTestName(request.getTestName())
-                  .setError(clientError)
-                  .build());
-        } catch (IOException e) {
-          logger.error("Error writing error response", e);
-        }
+        var clientError =
+            ClientErrorResult.newBuilder()
+                .setMessage("Error running conformance test: " + t.getMessage())
+                .build();
+
+        serde.write(
+            ClientCompatResponse.newBuilder()
+                .setTestName(request.getTestName())
+                .setError(clientError)
+                .build());
       }
     }
   }
@@ -79,9 +75,7 @@ public class NettyClientLauncher {
             // JSON-serialization conformance tests
             .jsonTypeRegistryConfigurer(
                 b ->
-                    b.add(
-                        List.of(
-                            UnaryRequest.getDescriptor(), IdempotentUnaryRequest.getDescriptor())))
+                    b.add(UnaryRequest.getDescriptor()).add(IdempotentUnaryRequest.getDescriptor()))
             .build();
 
     try {
@@ -128,13 +122,23 @@ public class NettyClientLauncher {
         callOptions = callOptions.withDeadlineAfter(spec.getTimeoutMs(), TimeUnit.MILLISECONDS);
       }
 
-      var responseFuture = ClientCalls.unaryCall(channel, md, callOptions, metadata, request);
+      var callResult = ClientCalls.unaryCall2(channel, md, callOptions, metadata, request);
 
       if (spec.getCancel().getAfterCloseSendMs() > 0) {
-        // TODO: Implement cancellation after a delay
+        new Thread(
+            () -> {
+              try {
+                Thread.sleep(spec.getCancel().getAfterCloseSendMs());
+                logger.info(">>> Cancelling conformance test: {}", spec.getTestName());
+
+                callResult.call().cancel("Requested by specification", null);
+              } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
+            });
       }
 
-      var response = responseFuture.join();
+      var response = callResult.future().join();
 
       logger.info("<<< Conformance test completed: {}", spec.getTestName());
 
