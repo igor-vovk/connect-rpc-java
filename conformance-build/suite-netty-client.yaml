@@ -7,5 +7,5 @@ features:
   compressions: [ COMPRESSION_IDENTITY ]
   supports_tls: false
   supports_trailers: false
-  supports_connect_get: true
+  supports_connect_get: false
   supports_message_receive_limit: false

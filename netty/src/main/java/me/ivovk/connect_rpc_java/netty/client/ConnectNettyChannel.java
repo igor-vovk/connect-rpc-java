@@ -12,6 +12,8 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 
@@ -29,20 +31,25 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
 
   private final EventLoopGroup workerGroup;
 
-  public ConnectNettyChannel(String host, int port, HeaderMapping<HttpHeaders> headerMapping) {
+  public ConnectNettyChannel(
+      String host,
+      int port,
+      HeaderMapping<HttpHeaders> headerMapping,
+      JsonMarshallerFactory jsonMarshallerFactory) {
     this.host = host;
     this.port = port;
     this.headerMapping = headerMapping;
-    this.jsonMarshallerFactory = new JsonMarshallerFactory();
+    this.jsonMarshallerFactory = jsonMarshallerFactory;
     this.workerGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
   }
 
-  private class ClientCallImpl<Req, Resp> extends ClientCall<Req, Resp> {
+  private class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final MethodDescriptor<Req, Resp> methodDescriptor;
-    private Listener<Resp> listener;
     private final CallOptions callOptions;
     private Metadata metadata;
-    private volatile io.netty.channel.Channel nettyChannel;
+    private io.netty.channel.Channel nettyChannel;
+    private Req messageToSend;
 
     public ClientCallImpl(MethodDescriptor<Req, Resp> methodDescriptor, CallOptions callOptions) {
       this.methodDescriptor = methodDescriptor;
@@ -51,7 +58,6 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
 
     @Override
     public void start(Listener<Resp> listener, Metadata metadata) {
-      this.listener = listener;
       this.metadata = metadata;
 
       Bootstrap b = new Bootstrap();
@@ -72,15 +78,14 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
               });
 
       ChannelFuture f = b.connect(host, port);
+      nettyChannel = f.channel();
       f.addListener(
           future -> {
             if (future.isSuccess()) {
-              nettyChannel = f.channel();
+              maybeSendRequest();
             } else {
               listener.onClose(Status.fromThrowable(future.cause()), new Metadata());
             }
-
-            listener.onReady();
           });
     }
 
@@ -103,18 +108,24 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
 
     @Override
     public void sendMessage(Req message) {
-      if (nettyChannel == null) {
-        throw new IllegalStateException("channel is null");
+      this.messageToSend = message;
+
+      maybeSendRequest();
+    }
+
+    private void maybeSendRequest() {
+      if (!nettyChannel.isActive() || messageToSend == null) {
+        return; // Channel not ready or no message to send
       }
 
       try {
         byte[] serializedMessage;
-        if (message instanceof Message message1) {
+        if (messageToSend instanceof Message message1) {
           serializedMessage =
               jsonMarshallerFactory.jsonMarshaller(message1).stream(message1).readAllBytes();
         } else {
           throw new IllegalArgumentException(
-              "Unsupported message type: " + message.getClass().getName());
+              "Unsupported message type: " + messageToSend.getClass().getName());
         }
 
         FullHttpRequest httpRequest =
@@ -124,11 +135,18 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
                 "http://" + host + ":" + port + "/" + methodDescriptor.getFullMethodName(),
                 Unpooled.wrappedBuffer(serializedMessage));
         var headers = httpRequest.headers();
-        headers.setAll(headerMapping.toHeaders(this.metadata));
-        headers.set(HttpHeaderNames.HOST, host);
-        headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
-        headers.set(HttpHeaderNames.CONTENT_LENGTH, httpRequest.content().readableBytes());
-        headers.set(HttpHeaderNames.CONTENT_TYPE, "application/proto");
+        headers.add(headerMapping.toHeaders(this.metadata));
+        headers.add(HttpHeaderNames.HOST, host);
+        headers.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+        headers.add(HttpHeaderNames.CONTENT_LENGTH, httpRequest.content().readableBytes());
+        headers.add(HttpHeaderNames.CONTENT_TYPE, "application/json");
+
+        if (logger.isDebugEnabled()) {
+          logger.trace(">>> Request headers: {}", headers);
+          logger.debug(
+              ">>> Request content: {}",
+              httpRequest.content().toString(io.netty.util.CharsetUtil.UTF_8));
+        }
 
         nettyChannel.writeAndFlush(httpRequest);
       } catch (Exception e) {
@@ -140,7 +158,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
   @Override
   public <Req, Resp> ClientCall<Req, Resp> newCall(
       MethodDescriptor<Req, Resp> methodDescriptor, CallOptions callOptions) {
-    return new ClientCallImpl<>(methodDescriptor, callOptions);
+    return new ClientCallImpl(methodDescriptor, callOptions);
   }
 
   @Override

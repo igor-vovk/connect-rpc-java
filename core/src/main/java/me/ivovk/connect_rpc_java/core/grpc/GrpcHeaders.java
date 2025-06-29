@@ -3,6 +3,7 @@ package me.ivovk.connect_rpc_java.core.grpc;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Metadata;
+import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 
 public class GrpcHeaders {
 
@@ -18,7 +19,7 @@ public class GrpcHeaders {
 
   public static Metadata.Key<Any> ERROR_DETAILS_KEY =
       Metadata.Key.of(
-          "connect-rpc-error-details",
+          "connect-error-details-bin",
           new Metadata.BinaryMarshaller<>() {
             @Override
             public byte[] toBytes(Any value) {
@@ -45,11 +46,11 @@ public class GrpcHeaders {
         .keys()
         .forEach(
             name -> {
-              var key = Metadata.Key.of(name, Metadata.ASCII_STRING_MARSHALLER);
+              var key = HeaderMapping.metadataKeyByHeaderName(name);
 
               if (name.startsWith("trailer-")) {
                 var trailerKey =
-                    Metadata.Key.of(name.substring(8), Metadata.ASCII_STRING_MARSHALLER);
+                    HeaderMapping.metadataKeyByHeaderName(name.substring("trailer-".length()));
 
                 metadata.getAll(key).forEach(value -> trailers.put(trailerKey, value));
               } else {

@@ -69,7 +69,17 @@ public class NettyClientLauncher {
           .build();
     }
 
-    Channel channel = ConnectNettyChannelBuilder.forAddress(spec.getHost(), spec.getPort()).build();
+    Channel channel =
+        ConnectNettyChannelBuilder.forAddress(spec.getHost(), spec.getPort())
+            // Registering message types in TypeRegistry is required to pass
+            // com.google.protobuf.any.Any
+            // JSON-serialization conformance tests
+            .jsonTypeRegistryConfigurer(
+                b ->
+                    b.add(
+                        List.of(
+                            UnaryRequest.getDescriptor(), IdempotentUnaryRequest.getDescriptor())))
+            .build();
 
     try {
       return switch (spec.getMethod()) {
