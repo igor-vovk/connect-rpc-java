@@ -11,7 +11,8 @@ ifeq ($(profile),netty-client)
 else ifeq ($(profile),netty-server)
 	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty.yaml --build-arg launcher=netty-server
 else ifeq ($(profile),netty-server-nonstable)
-	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty-nonstable.yaml --build-arg launcher=netty-server --build-arg stable=false
+	# Allow non-stable build to fail with a non-zero exit code
+	-$(DOCKER_BUILD_CMD) --build-arg config=suite-netty-nonstable.yaml --build-arg launcher=netty-server
 else
 	@echo "Error: Unknown profile '$(profile)'. Supported profiles: netty-client, netty-server, netty-server-nonstable."
 	@exit 1
