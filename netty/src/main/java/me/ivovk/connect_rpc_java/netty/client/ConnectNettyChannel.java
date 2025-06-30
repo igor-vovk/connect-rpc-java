@@ -6,6 +6,7 @@ import com.google.protobuf.Message;
 import io.grpc.*;
 import io.grpc.Channel;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioIoHandler;
@@ -124,10 +125,11 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
       }
 
       try {
-        byte[] serializedMessage;
+        ByteBuf content;
         if (messageToSend instanceof Message message1) {
-          serializedMessage =
+          byte[] bytes =
               jsonMarshallerFactory.jsonMarshaller(message1).stream(message1).readAllBytes();
+          content = Unpooled.wrappedBuffer(bytes);
         } else {
           throw new IllegalArgumentException(
               "Unsupported message type: " + messageToSend.getClass().getName());
@@ -138,7 +140,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
                 HttpVersion.HTTP_1_1,
                 HttpMethod.POST,
                 "http://" + host + ":" + port + "/" + methodDescriptor.getFullMethodName(),
-                Unpooled.wrappedBuffer(serializedMessage));
+                content);
         var headers = httpRequest.headers();
         headers.add(headerMapping.toHeaders(this.metadata));
         headers.add(HttpHeaderNames.HOST, host);

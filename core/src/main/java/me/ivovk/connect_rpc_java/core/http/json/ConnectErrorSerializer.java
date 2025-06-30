@@ -5,30 +5,23 @@ import connectrpc.Code;
 import connectrpc.Error;
 
 import java.lang.reflect.Type;
-import java.util.Arrays;
 
 public class ConnectErrorSerializer implements JsonSerializer<Error> {
 
-  private static final JsonElement[] STRING_ERROR_CODES;
+  private static final JsonElement[] STRING_ERROR_CODES = new JsonElement[16 + 1];
+  private static final String CODE_PREFIX = "CODE_";
 
   static {
-    var maxCodeValue =
-        Arrays.stream(Code.values())
-            .filter(p -> p != Code.UNRECOGNIZED)
-            .mapToInt(Code::getNumber)
-            .max()
-            .orElse(0);
-
-    STRING_ERROR_CODES = new JsonElement[maxCodeValue + 1];
-
+    String codeName;
     for (var code : Code.values()) {
-      if (code != Code.UNRECOGNIZED) {
-        var codeName = code.name();
-        if (codeName.startsWith("CODE_")) {
-          codeName = codeName.substring("CODE_".length()).toLowerCase();
-        }
-        STRING_ERROR_CODES[code.getNumber()] = new JsonPrimitive(codeName);
+      if (code == Code.UNRECOGNIZED) continue;
+
+      codeName = code.name();
+      if (codeName.startsWith(CODE_PREFIX)) {
+        codeName = codeName.substring(CODE_PREFIX.length()).toLowerCase();
       }
+
+      STRING_ERROR_CODES[code.getNumber()] = new JsonPrimitive(codeName);
     }
   }
 
