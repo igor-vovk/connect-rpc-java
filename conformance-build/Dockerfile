@@ -22,7 +22,6 @@ WORKDIR /conformance
 RUN mkdir "/logs"
 
 ARG config="suite.yaml"
-ARG stable="true"
 ARG mode="server"
 ARG launcher
 
@@ -34,8 +33,7 @@ RUN LOGS_PATH="/logs" LAUNCHER="$launcher" \
     --mode $mode \
     -v -vv --trace \
     -- \
-    /app/bin/conformance; \
-    if [ "$stable" = "false" ]; then exit 0; fi
+    /app/bin/conformance
 
 FROM scratch AS export
 
