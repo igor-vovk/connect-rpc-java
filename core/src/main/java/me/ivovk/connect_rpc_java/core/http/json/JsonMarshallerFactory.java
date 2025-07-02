@@ -31,8 +31,8 @@ public class JsonMarshallerFactory {
 
     this.gson =
         new GsonBuilder()
-            .registerTypeAdapter(ErrorDetailsAny.class, new ErrorDetailsAnySerializer())
-            .registerTypeAdapter(Error.class, new ConnectErrorSerializer())
+            .registerTypeAdapter(ErrorDetailsAny.class, new ErrorDetailsAnyAdapter())
+            .registerTypeAdapter(Error.class, new ConnectErrorAdapter())
             .create();
   }
 
