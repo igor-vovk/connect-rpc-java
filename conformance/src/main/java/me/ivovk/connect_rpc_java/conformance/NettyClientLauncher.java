@@ -32,7 +32,7 @@ public class NettyClientLauncher {
     var serde = LengthPrefixedProtoSerde.forSystemInOut();
 
     ClientCompatRequest request;
-    while ((request = serde.read(ClientCompatRequest.parser())) != null) {
+    while ((request = serde.read(ClientCompatRequest.getDefaultInstance())) != null) {
       try {
         ClientCompatResponse response = runTestCase(request);
 

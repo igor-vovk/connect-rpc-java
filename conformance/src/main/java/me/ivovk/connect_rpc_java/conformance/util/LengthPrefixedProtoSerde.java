@@ -23,11 +23,15 @@ public class LengthPrefixedProtoSerde {
   }
 
   @Nullable
-  public <I> I read(Parser<I> parser) throws IOException {
+  public <T extends MessageLite> T read(T defaultInstance) throws IOException {
     var requestSize = IntSerde.read(in);
     if (requestSize == null) {
       return null;
     }
+
+    @SuppressWarnings("unchecked")
+    Parser<T> parser = (Parser<T>) defaultInstance.getParserForType();
+
     return parser.parseFrom(in.readNBytes(requestSize));
   }
 
