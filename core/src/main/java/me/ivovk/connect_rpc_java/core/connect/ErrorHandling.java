@@ -1,19 +1,18 @@
 package me.ivovk.connect_rpc_java.core.connect;
 
-import connectrpc.ErrorDetailsAny;
 import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusException;
 import io.grpc.StatusRuntimeException;
-import me.ivovk.connect_rpc_java.core.grpc.GrpcHeaders;
+import me.ivovk.connect_rpc_java.core.grpc.ErrorDetails;
 import me.ivovk.connect_rpc_java.core.grpc.StatusExceptionWithHeaders;
 
 public class ErrorHandling {
 
-  public record ErrorDetails(
+  public record Details(
       int httpStatusCode, connectrpc.Error error, Metadata headers, Metadata trailers) {}
 
-  public static ErrorDetails extractDetails(Throwable e) {
+  public static Details extractDetails(Throwable e) {
     Status grpcStatus = Status.INTERNAL;
     Metadata headers = new Metadata();
     Metadata trailers = new Metadata();
@@ -59,18 +58,9 @@ public class ErrorHandling {
             .setMessage(message);
 
     // Extract details from trailers if present
-    var errorDetails = trailers.removeAll(GrpcHeaders.ERROR_DETAILS_KEY);
-    if (errorDetails != null) {
-      for (var errorDetail : errorDetails) {
-        errorBuilder.addDetails(
-            ErrorDetailsAny.newBuilder()
-                .setType(errorDetail.getTypeUrl().replace("type.googleapis.com/", ""))
-                .setValue(errorDetail.getValue())
-                .build());
-      }
-    }
+    ErrorDetails.extract(trailers).ifPresent(errorBuilder::addDetails);
 
-    return new ErrorDetails(
+    return new Details(
         StatusCodeMappings.toHttpStatusCode(grpcStatus), errorBuilder.build(), headers, trailers);
   }
 }

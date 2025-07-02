@@ -1,7 +1,5 @@
 package me.ivovk.connect_rpc_java.core.grpc;
 
-import com.google.protobuf.Any;
-import com.google.protobuf.InvalidProtocolBufferException;
 import io.grpc.Metadata;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 
@@ -16,25 +14,6 @@ public class GrpcHeaders {
   public static Metadata.Key<Long> CONNECT_TIMEOUT_MS =
       Metadata.Key.of(
           "connect-timeout-ms", MetadataSyntax.asciiMarshaller(Long::parseLong, String::valueOf));
-
-  public static Metadata.Key<Any> ERROR_DETAILS_KEY =
-      Metadata.Key.of(
-          "connect-error-details-bin",
-          new Metadata.BinaryMarshaller<>() {
-            @Override
-            public byte[] toBytes(Any value) {
-              return value.toByteArray();
-            }
-
-            @Override
-            public Any parseBytes(byte[] serialized) {
-              try {
-                return Any.parseFrom(serialized);
-              } catch (InvalidProtocolBufferException e) {
-                throw new RuntimeException(e);
-              }
-            }
-          });
 
   public record HeadersAndTrailers(Metadata headers, Metadata trailers) {}
 

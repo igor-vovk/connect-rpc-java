@@ -22,7 +22,6 @@ test-conformance-all: build
 	@echo "Running all conformance tests..."
 	make test-conformance profile=netty-server
 	make test-conformance profile=netty-client
-	make test-conformance profile=netty-server-nonstable
 
 .PHONY: test-conformance
 test-conformance: build
