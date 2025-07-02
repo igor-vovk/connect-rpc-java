@@ -72,29 +72,24 @@ public class ErrorTypeAdapter extends TypeAdapter<Error> {
     in.beginObject();
     while (in.hasNext()) {
       switch (in.nextName()) {
-        case "code":
-          var codeString = in.nextString();
-          var code = STRING_TO_CODE.get(codeString);
+        case "code" -> {
+          var code = STRING_TO_CODE.get(in.nextString());
           if (code != null) {
             builder.setCode(code);
           }
-          break;
-        case "message":
-          builder.setMessage(in.nextString());
-          break;
-        case "details":
+        }
+        case "message" -> builder.setMessage(in.nextString());
+        case "details" -> {
           in.beginArray();
           while (in.hasNext()) {
-            ErrorDetailsAny detail = errorDetailsAnyAdapter.read(in);
+            var detail = errorDetailsAnyAdapter.read(in);
             if (detail != null) {
               builder.addDetails(detail);
             }
           }
           in.endArray();
-          break;
-        default:
-          in.skipValue();
-          break;
+        }
+        default -> in.skipValue();
       }
     }
     in.endObject();
