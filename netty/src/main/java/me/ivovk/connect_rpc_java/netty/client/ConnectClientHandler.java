@@ -1,6 +1,5 @@
 package me.ivovk.connect_rpc_java.netty.client;
 
-import com.google.protobuf.Any;
 import com.google.protobuf.Message;
 import io.grpc.ClientCall;
 import io.grpc.MethodDescriptor;
