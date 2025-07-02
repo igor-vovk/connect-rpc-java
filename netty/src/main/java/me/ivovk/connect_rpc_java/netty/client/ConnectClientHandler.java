@@ -2,6 +2,7 @@ package me.ivovk.connect_rpc_java.netty.client;
 
 import com.google.protobuf.Message;
 import io.grpc.ClientCall;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.netty.buffer.ByteBufInputStream;
@@ -11,6 +12,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpStatusClass;
+import io.netty.handler.timeout.ReadTimeoutException;
 import me.ivovk.connect_rpc_java.core.connect.StatusCodeMappings;
 import me.ivovk.connect_rpc_java.core.grpc.ErrorDetails;
 import me.ivovk.connect_rpc_java.core.grpc.GrpcHeaders;
@@ -100,7 +102,12 @@ public class ConnectClientHandler<Resp extends Message>
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-    responseListener.onClose(Status.fromThrowable(cause), Status.trailersFromThrowable(cause));
+    if (cause == ReadTimeoutException.INSTANCE) {
+      responseListener.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+    } else {
+      responseListener.onClose(Status.fromThrowable(cause), Status.trailersFromThrowable(cause));
+    }
+
     ctx.close();
   }
 }

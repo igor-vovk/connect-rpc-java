@@ -13,11 +13,13 @@ import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 public class ConnectNettyChannel extends Channel implements AutoCloseable {
@@ -28,6 +30,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
 
   private final int port;
 
+  private final int timeout;
   private final HeaderMapping<HttpHeaders> headerMapping;
 
   private final JsonMarshallerFactory jsonMarshallerFactory;
@@ -37,10 +40,12 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
   public ConnectNettyChannel(
       String host,
       int port,
+      int timeout,
       HeaderMapping<HttpHeaders> headerMapping,
       JsonMarshallerFactory jsonMarshallerFactory) {
     this.host = host;
     this.port = port;
+    this.timeout = timeout;
     this.headerMapping = headerMapping;
     this.jsonMarshallerFactory = jsonMarshallerFactory;
     this.workerGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
@@ -65,23 +70,41 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
       this.metadata = metadata;
       this.responseListener = responseListener;
 
+      Deadline deadline = callOptions.getDeadline();
+      long timeoutMillis;
+      if (deadline != null) {
+        timeoutMillis = deadline.timeRemaining(TimeUnit.MILLISECONDS);
+      } else {
+        timeoutMillis = timeout;
+      }
+      if (timeoutMillis < 0) {
+        responseListener.onClose(
+            Status.DEADLINE_EXCEEDED.withDescription("Deadline exceeded before call started."),
+            new Metadata());
+        return;
+      }
+
       Bootstrap b = new Bootstrap();
       b.group(workerGroup)
           .channel(NioSocketChannel.class)
           .option(ChannelOption.TCP_NODELAY, true)
+          .option(
+              ChannelOption.CONNECT_TIMEOUT_MILLIS,
+              (int) Math.min(timeoutMillis, Integer.MAX_VALUE))
           .handler(
               new ChannelInitializer<SocketChannel>() {
                 @Override
-                public void initChannel(SocketChannel ch) throws Exception {
-                  ch.pipeline()
-                      .addLast(new HttpClientCodec())
-                      .addLast(new HttpObjectAggregator(1048576))
-                      .addLast(
-                          new ConnectClientHandler<>(
-                              methodDescriptor,
-                              headerMapping,
-                              jsonMarshallerFactory,
-                              responseListener));
+                public void initChannel(SocketChannel ch) {
+                  ChannelPipeline p = ch.pipeline();
+                  p.addLast(new ReadTimeoutHandler(timeoutMillis, TimeUnit.MILLISECONDS));
+                  p.addLast(new HttpClientCodec());
+                  p.addLast(new HttpObjectAggregator(1048576));
+                  p.addLast(
+                      new ConnectClientHandler<>(
+                          methodDescriptor,
+                          headerMapping,
+                          jsonMarshallerFactory,
+                          responseListener));
                 }
               });
 
@@ -154,6 +177,10 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
         headers.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
         headers.add(HttpHeaderNames.CONTENT_LENGTH, httpRequest.content().readableBytes());
         headers.add(HttpHeaderNames.CONTENT_TYPE, "application/json");
+        var deadline = callOptions.getDeadline();
+        if (deadline != null) {
+          headers.add("connect-timeout-ms", deadline.timeRemaining(TimeUnit.MILLISECONDS));
+        }
 
         if (logger.isTraceEnabled()) {
           logger.trace(">>> Request headers: {}", headers);

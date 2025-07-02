@@ -11,6 +11,7 @@ public class ConnectNettyChannelBuilder {
   private String host;
   private int port;
   private Configurer<TypeRegistry.Builder> jsonTypeRegistryConfigurer = Configurer.noop();
+  private int timeoutMs = 0;
 
   private ConnectNettyChannelBuilder() {}
 
@@ -29,6 +30,12 @@ public class ConnectNettyChannelBuilder {
     return this;
   }
 
+  public ConnectNettyChannelBuilder timeout(int timeoutMs) {
+    this.timeoutMs = timeoutMs;
+
+    return this;
+  }
+
   public Channel build() {
     var headerMapping =
         new NettyHeaderMapping(
@@ -37,6 +44,6 @@ public class ConnectNettyChannelBuilder {
     var jsonTypeRegistry = jsonTypeRegistryConfigurer.configure(TypeRegistry.newBuilder()).build();
     var jsonMarshallerFactory = new JsonMarshallerFactory(jsonTypeRegistry);
 
-    return new ConnectNettyChannel(host, port, headerMapping, jsonMarshallerFactory);
+    return new ConnectNettyChannel(host, port, timeoutMs, headerMapping, jsonMarshallerFactory);
   }
 }
