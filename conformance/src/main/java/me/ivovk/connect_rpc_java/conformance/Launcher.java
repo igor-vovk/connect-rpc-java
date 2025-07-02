@@ -1,5 +1,7 @@
 package me.ivovk.connect_rpc_java.conformance;
 
+import me.ivovk.connect_rpc_java.conformance.util.LengthPrefixedProtoSerde;
+
 public class Launcher {
 
   public static void main(String... args) throws Exception {
@@ -9,9 +11,11 @@ public class Launcher {
     }
     var launcher = args[0];
 
+    var serde = LengthPrefixedProtoSerde.forSystemInOut();
+
     switch (launcher) {
-      case "netty-server" -> NettyServerLauncher.main(args);
-      case "netty-client" -> NettyClientLauncher.main(args);
+      case "netty-server" -> new NettyServerLauncher(serde).run();
+      case "netty-client" -> new NettyClientLauncher(serde).run();
       default -> System.err.println("Unknown launcher: " + launcher);
     }
   }

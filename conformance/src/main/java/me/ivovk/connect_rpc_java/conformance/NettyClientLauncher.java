@@ -26,10 +26,14 @@ public class NettyClientLauncher {
 
   private static final Logger logger = LoggerFactory.getLogger(NettyClientLauncher.class);
 
-  public static void main(String[] args) throws Exception {
-    logger.info("Starting conformance client tests...");
+  private final LengthPrefixedProtoSerde serde;
 
-    var serde = LengthPrefixedProtoSerde.forSystemInOut();
+  public NettyClientLauncher(LengthPrefixedProtoSerde serde) {
+    this.serde = serde;
+  }
+
+  public void run() throws Exception {
+    logger.info("Starting conformance client tests...");
 
     ClientCompatRequest request;
     while ((request = serde.read(ClientCompatRequest.getDefaultInstance())) != null) {
@@ -71,8 +75,7 @@ public class NettyClientLauncher {
     Channel channel =
         ConnectNettyChannelBuilder.forAddress(spec.getHost(), spec.getPort())
             // Registering message types in TypeRegistry is required to pass
-            // com.google.protobuf.any.Any
-            // JSON-serialization conformance tests
+            // google.protobuf.Any JSON-serialization conformance tests
             .jsonTypeRegistryConfigurer(
                 b ->
                     b.add(UnaryRequest.getDescriptor()).add(IdempotentUnaryRequest.getDescriptor()))

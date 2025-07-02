@@ -25,10 +25,15 @@ public class NettyServerLauncher {
 
   private static final Logger logger = LoggerFactory.getLogger(NettyServerLauncher.class);
 
-  public static void main(String[] args) throws Exception {
-    var serde = LengthPrefixedProtoSerde.forSystemInOut();
+  private final LengthPrefixedProtoSerde serde;
+
+  public NettyServerLauncher(LengthPrefixedProtoSerde serde) {
+    this.serde = serde;
+  }
+
+  public void run() throws Exception {
     // Must read the request from STDIN, even though it is not used.
-    var req = serde.read(ServerCompatRequest.getDefaultInstance());
+    serde.read(ServerCompatRequest.getDefaultInstance());
 
     var service = new ConformanceServiceImpl();
 
@@ -36,20 +41,17 @@ public class NettyServerLauncher {
         ConnectNettyServerBuilder.forServices(service)
             .serverBuilderConfigurer(sb -> sb.intercept(new MetadataInterceptor()))
             // Registering message types in TypeRegistry is required to pass
-            // com.google.protobuf.any.Any
-            // JSON-serialization conformance tests
+            // google.protobuf.Any JSON-serialization conformance tests
             .jsonTypeRegistryConfigurer(
                 b ->
                     b.add(UnaryRequest.getDescriptor()).add(IdempotentUnaryRequest.getDescriptor()))
             .build();
 
-    var resp =
+    serde.write(
         ServerCompatResponse.newBuilder()
             .setHost(server.getHost())
             .setPort(server.getPort())
-            .build();
-
-    serde.write(resp);
+            .build());
 
     System.err.println("Netty Server started on " + server.getHost() + ":" + server.getPort());
     logger.info("Netty Server started on {}:{}", server.getHost(), server.getPort());
