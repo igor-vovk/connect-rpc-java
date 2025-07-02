@@ -51,6 +51,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
     private final MethodDescriptor<Req, Resp> methodDescriptor;
     private final CallOptions callOptions;
     private Metadata metadata;
+    private Listener<Resp> responseListener;
     private io.netty.channel.Channel nettyChannel;
     private Req messageToSend;
 
@@ -62,6 +63,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
     @Override
     public void start(Listener<Resp> responseListener, Metadata metadata) {
       this.metadata = metadata;
+      this.responseListener = responseListener;
 
       Bootstrap b = new Bootstrap();
       b.group(workerGroup)
@@ -105,6 +107,9 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
       if (nettyChannel != null) {
         nettyChannel.close();
       }
+
+      responseListener.onClose(
+          Status.CANCELLED.withDescription(message).withCause(cause), new Metadata());
     }
 
     @Override
@@ -121,6 +126,8 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
 
     private void maybeSendRequest() {
       if (!nettyChannel.isActive() || messageToSend == null) {
+        // TODO: introduce a countdown latch or similar mechanism to throw an error if the channel
+        // is not ready
         return; // Channel not ready or no message to send
       }
 
@@ -148,9 +155,9 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
         headers.add(HttpHeaderNames.CONTENT_LENGTH, httpRequest.content().readableBytes());
         headers.add(HttpHeaderNames.CONTENT_TYPE, "application/json");
 
-        if (logger.isDebugEnabled()) {
+        if (logger.isTraceEnabled()) {
           logger.trace(">>> Request headers: {}", headers);
-          logger.debug(">>> Request content: {}", httpRequest.content().toString(UTF_8));
+          logger.trace(">>> Request content: {}", httpRequest.content().toString(UTF_8));
         }
 
         nettyChannel.writeAndFlush(httpRequest);

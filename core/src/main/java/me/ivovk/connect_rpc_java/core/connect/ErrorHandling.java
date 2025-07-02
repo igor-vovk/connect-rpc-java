@@ -22,7 +22,7 @@ public class ErrorHandling {
     while (cause != null) {
       if (cause instanceof StatusException se) {
         grpcStatus = se.getStatus();
-        if (se instanceof StatusExceptionWithHeaders seh) {
+        if (se instanceof StatusExceptionWithHeaders seh && seh.getHeaders() != null) {
           headers = seh.getHeaders();
         }
         if (se.getTrailers() != null) {

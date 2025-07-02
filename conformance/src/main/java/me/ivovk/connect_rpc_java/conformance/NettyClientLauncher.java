@@ -117,6 +117,8 @@ public class NettyClientLauncher {
       var metadata = ConformanceHeadersConv.toMetadata(spec.getRequestHeadersList());
       var request = md.parseRequest(spec.getRequestMessages(0).getValue().newInput());
 
+      logger.info(">>> Test specification: {}", spec);
+
       logger.info(">>> Request metadata: {}", metadata);
       logger.info(">>> Request body: {}", request);
 
@@ -128,7 +130,7 @@ public class NettyClientLauncher {
       var callResult = ClientCalls.unaryCall2(channel, md, callOptions, metadata, request);
 
       if (spec.getCancel().getAfterCloseSendMs() > 0) {
-        new Thread(
+        Runnable cancelAfterCloseSend =
             () -> {
               try {
                 Thread.sleep(spec.getCancel().getAfterCloseSendMs());
@@ -138,7 +140,9 @@ public class NettyClientLauncher {
               } catch (InterruptedException e) {
                 throw new RuntimeException(e);
               }
-            });
+            };
+
+        new Thread(cancelAfterCloseSend).start();
       }
 
       var response = callResult.future().join();
