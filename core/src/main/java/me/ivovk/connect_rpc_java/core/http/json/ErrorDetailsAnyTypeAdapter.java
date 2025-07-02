@@ -5,6 +5,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.UnsafeByteOperations;
 import connectrpc.ErrorDetailsAny;
 
 import java.io.IOException;
@@ -38,15 +39,10 @@ public class ErrorDetailsAnyTypeAdapter extends TypeAdapter<ErrorDetailsAny> {
     ByteString value = null;
     while (in.hasNext()) {
       switch (in.nextName()) {
-        case "type":
-          type = in.nextString();
-          break;
-        case "value":
-          value = ByteString.copyFrom(BASE64_DECODER.decode(in.nextString()));
-          break;
-        default:
-          in.skipValue();
-          break;
+        case "type" -> type = in.nextString();
+        case "value" ->
+            value = UnsafeByteOperations.unsafeWrap(BASE64_DECODER.decode(in.nextString()));
+        default -> in.skipValue();
       }
     }
     in.endObject();
