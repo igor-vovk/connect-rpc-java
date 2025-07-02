@@ -32,8 +32,9 @@ public class StatusCodeMappings {
       case 409 -> Status.UNKNOWN;
       case 429, 502, 503, 504 -> Status.UNAVAILABLE;
       case 499 -> Status.CANCELLED;
-      default -> Status.UNKNOWN.withDescription(
-          "HTTP status code " + httpCode + " is not supported by the protocol");
+      default ->
+          Status.UNKNOWN.withDescription(
+              "HTTP status code " + httpCode + " is not supported by the protocol");
     };
   }
 

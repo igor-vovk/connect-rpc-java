@@ -33,7 +33,7 @@ public final class ErrorDetails {
     if (details != null) {
       metadata.discardAll(ERROR_DETAILS_KEY);
     }
-    
+
     return Optional.ofNullable(details);
   }
 }
