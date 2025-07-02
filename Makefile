@@ -25,14 +25,10 @@ test-conformance: build
 	@echo "Running conformance tests with profile: $(profile)"
 ifeq ($(profile),netty-client)
 	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty-client.yaml --build-arg launcher=netty-client --build-arg mode=client
-	@echo "Exiting with code: $(shell cat out/exit_code)"
-	exit $(shell cat out/exit_code)
+	@code=$$(cat out/exit_code); echo "Exiting with code: $$code"; exit $$code
 else ifeq ($(profile),netty-server)
 	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty.yaml --build-arg launcher=netty-server
-	ls out
-	cat out/exit_code
-	@echo "Exiting with code: $(shell cat out/exit_code)"
-	exit $(shell cat out/exit_code)
+	@code=$$(cat out/exit_code); echo "Exiting with code: $$code"; exit $$code
 else ifeq ($(profile),netty-server-nonstable)
 	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty-nonstable.yaml --build-arg launcher=netty-server
 else
