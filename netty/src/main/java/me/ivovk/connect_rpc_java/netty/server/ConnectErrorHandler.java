@@ -1,4 +1,4 @@
-package me.ivovk.connect_rpc_java.netty.connect;
+package me.ivovk.connect_rpc_java.netty.server;
 
 import connectrpc.Error;
 import io.grpc.MethodDescriptor.Marshaller;
@@ -9,7 +9,6 @@ import me.ivovk.connect_rpc_java.core.connect.ErrorHandling;
 import me.ivovk.connect_rpc_java.core.http.MediaTypes;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import me.ivovk.connect_rpc_java.netty.NettyHeaderMapping;
-import me.ivovk.connect_rpc_java.netty.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

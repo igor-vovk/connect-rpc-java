@@ -45,6 +45,7 @@ class PathsTest {
 
     assertTrue(result.isPresent());
     assertEquals(Path.of("api", "v1", "users"), result.get());
+    assertEquals("v1", result.get().segment(1));
   }
 
   @Test

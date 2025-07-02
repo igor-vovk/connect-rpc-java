@@ -1,4 +1,4 @@
-package me.ivovk.connect_rpc_java.netty;
+package me.ivovk.connect_rpc_java.netty.server;
 
 import static io.netty.buffer.Unpooled.wrappedBuffer;
 
@@ -10,7 +10,6 @@ import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.MediaTypes;
 import me.ivovk.connect_rpc_java.core.http.Paths;
-import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,8 +54,8 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
               .filter(path -> path.length() == 2)
               .flatMap(
                   path -> {
-                    var serviceName = path.segments()[0];
-                    var methodName = path.segments()[1];
+                    var serviceName = path.segment(0);
+                    var methodName = path.segment(1);
 
                     return methodRegistry.get(serviceName, methodName);
                   });

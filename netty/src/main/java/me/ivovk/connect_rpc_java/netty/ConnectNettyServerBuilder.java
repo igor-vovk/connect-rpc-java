@@ -25,8 +25,10 @@ import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.Paths;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
-import me.ivovk.connect_rpc_java.netty.connect.ConnectErrorHandler;
-import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
+import me.ivovk.connect_rpc_java.netty.server.ConnectErrorHandler;
+import me.ivovk.connect_rpc_java.netty.server.ConnectHandler;
+import me.ivovk.connect_rpc_java.netty.server.HttpServerHandler;
+import me.ivovk.connect_rpc_java.netty.server.NettyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
