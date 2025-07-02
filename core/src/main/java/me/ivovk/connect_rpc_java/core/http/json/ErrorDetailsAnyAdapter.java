@@ -10,6 +10,7 @@ import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import com.google.protobuf.ByteString;
 import connectrpc.ErrorDetailsAny;
+
 import java.lang.reflect.Type;
 import java.util.Base64;
 
@@ -40,7 +41,8 @@ public class ErrorDetailsAnyAdapter
   }
 
   @Override
-  public ErrorDetailsAny deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
+  public ErrorDetailsAny deserialize(
+      JsonElement json, Type typeOfT, JsonDeserializationContext context)
       throws JsonParseException {
     var jsonObject = json.getAsJsonObject();
 
