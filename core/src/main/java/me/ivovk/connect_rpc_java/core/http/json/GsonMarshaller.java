@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.protobuf.Message;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -12,6 +14,7 @@ import java.nio.charset.StandardCharsets;
 public class GsonMarshaller<T extends Message> implements MethodDescriptor.Marshaller<T> {
 
   private static final Charset charset = StandardCharsets.UTF_8;
+  private final Logger logger = LoggerFactory.getLogger(getClass());
 
   private final Gson gson;
   private final T defaultInstance;
@@ -41,6 +44,10 @@ public class GsonMarshaller<T extends Message> implements MethodDescriptor.Marsh
   @SuppressWarnings("unchecked")
   @Override
   public T parse(InputStream stream) {
+    if (logger.isTraceEnabled()) {
+      logger.trace("Parsing type {} with Gson", defaultInstance.getClass().getName());
+    }
+
     try (var reader = new InputStreamReader(stream, charset)) {
       return (T) gson.fromJson(reader, defaultInstance.getClass());
     } catch (IOException e) {
