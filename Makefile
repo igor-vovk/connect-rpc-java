@@ -29,6 +29,7 @@ ifeq ($(profile),netty-client)
 	exit $(shell cat out/exit_code)
 else ifeq ($(profile),netty-server)
 	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty.yaml --build-arg launcher=netty-server
+	ls out
 	@echo "Exiting with code: $(shell cat out/exit_code)"
 	exit $(shell cat out/exit_code)
 else ifeq ($(profile),netty-server-nonstable)
