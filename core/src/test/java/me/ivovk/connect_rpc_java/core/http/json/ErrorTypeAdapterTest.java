@@ -11,17 +11,13 @@ import connectrpc.ErrorDetailsAny;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ConnectErrorAdapterTest {
+class ErrorTypeAdapterTest {
 
   private Gson gson;
 
   @BeforeEach
   void setUp() {
-    gson =
-        new GsonBuilder()
-            .registerTypeAdapter(Error.class, new ConnectErrorAdapter())
-            .registerTypeAdapter(ErrorDetailsAny.class, new ErrorDetailsAnyAdapter())
-            .create();
+    gson = new GsonBuilder().registerTypeAdapter(Error.class, new ErrorTypeAdapter()).create();
   }
 
   @Test
