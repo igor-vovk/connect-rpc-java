@@ -8,9 +8,9 @@ import java.util.Optional;
 
 public final class ErrorDetails {
 
-  public static final Metadata.Key<ErrorDetailsAny> ERROR_DETAILS_KEY =
+  private static final Metadata.Key<ErrorDetailsAny> ERROR_DETAILS_KEY =
       Metadata.Key.of(
-          "grpc-status-details-bin",
+          "connect-error-details-bin",
           MetadataSyntax.binaryMarshaller(ErrorDetailsAny.parser(), ErrorDetailsAny::toByteArray));
 
   public static <M extends Message> void inject(Metadata metadata, M m) {
@@ -20,11 +20,15 @@ public final class ErrorDetails {
             .setValue(m.toByteString())
             .build();
 
-    metadata.discardAll(ERROR_DETAILS_KEY);
-    metadata.put(ERROR_DETAILS_KEY, errorDetailsAny);
+    injectDetails(metadata, errorDetailsAny);
   }
 
-  public static Optional<ErrorDetailsAny> get(Metadata metadata) {
+  public static void injectDetails(Metadata metadata, ErrorDetailsAny eda) {
+    metadata.discardAll(ERROR_DETAILS_KEY);
+    metadata.put(ERROR_DETAILS_KEY, eda);
+  }
+
+  public static Optional<ErrorDetailsAny> extract(Metadata metadata) {
     return Optional.ofNullable(metadata.get(ERROR_DETAILS_KEY));
   }
 }

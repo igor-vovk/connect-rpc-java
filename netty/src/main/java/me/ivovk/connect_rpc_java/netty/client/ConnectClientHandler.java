@@ -13,6 +13,7 @@ import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpStatusClass;
 import me.ivovk.connect_rpc_java.core.connect.StatusCodeMappings;
+import me.ivovk.connect_rpc_java.core.grpc.ErrorDetails;
 import me.ivovk.connect_rpc_java.core.grpc.GrpcHeaders;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
@@ -88,13 +89,7 @@ public class ConnectClientHandler<Resp extends Message>
         if (error != null && error.getDetailsCount() > 0) {
           var details = error.getDetails(0);
 
-          hat.trailers()
-              .put(
-                  GrpcHeaders.ERROR_DETAILS_KEY,
-                  Any.newBuilder()
-                      .setTypeUrl(details.getType())
-                      .setValue(details.getValue())
-                      .build());
+          ErrorDetails.injectDetails(hat.trailers(), details);
         }
 
         responseListener.onClose(status, hat.trailers());
