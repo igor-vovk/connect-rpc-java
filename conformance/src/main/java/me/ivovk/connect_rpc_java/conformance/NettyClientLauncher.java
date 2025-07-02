@@ -74,6 +74,7 @@ public class NettyClientLauncher {
 
     Channel channel =
         ConnectNettyChannelBuilder.forAddress(spec.getHost(), spec.getPort())
+            .timeout(spec.getTimeoutMs())
             // Registering message types in TypeRegistry is required to pass
             // google.protobuf.Any JSON-serialization conformance tests
             .jsonTypeRegistryConfigurer(
@@ -117,10 +118,10 @@ public class NettyClientLauncher {
       var metadata = ConformanceHeadersConv.toMetadata(spec.getRequestHeadersList());
       var request = md.parseRequest(spec.getRequestMessages(0).getValue().newInput());
 
-      logger.info(">>> Test specification: {}", spec);
+      // logger.info(">>> Test specification:\n{}", spec);
 
-      logger.info(">>> Request metadata: {}", metadata);
-      logger.info(">>> Request body: {}", request);
+      logger.info(">>> Request metadata:\n{}", metadata);
+      logger.info(">>> Request body:\n{}", request);
 
       var callOptions = CallOptions.DEFAULT;
       if (spec.hasTimeoutMs()) {
