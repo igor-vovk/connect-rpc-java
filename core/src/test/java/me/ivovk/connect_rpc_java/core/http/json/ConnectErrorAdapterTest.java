@@ -1,5 +1,7 @@
 package me.ivovk.connect_rpc_java.core.http.json;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.protobuf.ByteString;
@@ -8,8 +10,6 @@ import connectrpc.Error;
 import connectrpc.ErrorDetailsAny;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ConnectErrorAdapterTest {
 
@@ -41,7 +41,10 @@ class ConnectErrorAdapterTest {
   @Test
   void serializeErrorWithMessage() {
     var error =
-        Error.newBuilder().setCode(Code.CODE_UNKNOWN).setMessage("An unknown error occurred").build();
+        Error.newBuilder()
+            .setCode(Code.CODE_UNKNOWN)
+            .setMessage("An unknown error occurred")
+            .build();
     var json = gson.toJson(error);
     assertEquals("{\"code\":\"unknown\",\"message\":\"An unknown error occurred\"}", json);
   }
