@@ -8,15 +8,16 @@ public class StatusCodeMappings {
   public static int toHttpStatusCode(Status status) {
     return switch (status.getCode()) {
       case OK -> 200;
-      case CANCELLED, DEADLINE_EXCEEDED -> 408;
-      case UNKNOWN, INTERNAL, DATA_LOSS -> 500;
       case INVALID_ARGUMENT, FAILED_PRECONDITION, OUT_OF_RANGE -> 400;
-      case NOT_FOUND -> 404;
-      case ALREADY_EXISTS, ABORTED -> 409;
-      case PERMISSION_DENIED -> 403;
       case UNAUTHENTICATED -> 401;
+      case NOT_FOUND -> 404;
+      case PERMISSION_DENIED -> 403;
+      case ALREADY_EXISTS, ABORTED -> 409;
       case RESOURCE_EXHAUSTED -> 429;
+      case CANCELLED -> 499;
+      case UNKNOWN, INTERNAL, DATA_LOSS -> 500;
       case UNIMPLEMENTED -> 501;
+      case DEADLINE_EXCEEDED -> 504;
       case UNAVAILABLE -> 503;
     };
   }
@@ -29,11 +30,10 @@ public class StatusCodeMappings {
       case 403 -> Status.PERMISSION_DENIED;
       case 404, 501 -> Status.UNIMPLEMENTED;
       case 409 -> Status.UNKNOWN;
-      case 429, 504, 503, 502 -> Status.UNAVAILABLE;
+      case 429, 502, 503, 504 -> Status.UNAVAILABLE;
       case 499 -> Status.CANCELLED;
-      default ->
-          Status.UNKNOWN.withDescription(
-              "HTTP status code " + httpCode + " is not supported by the protocol");
+      default -> Status.UNKNOWN.withDescription(
+          "HTTP status code " + httpCode + " is not supported by the protocol");
     };
   }
 
