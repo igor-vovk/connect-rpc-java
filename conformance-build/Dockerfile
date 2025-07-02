@@ -9,21 +9,22 @@ ADD conformance-build/*.yaml /conformance/
 ADD build/conformance-1.0.0 /app
 WORKDIR /conformance
 
-RUN mkdir "/logs"
+RUN mkdir "/out"
 
 ARG config="suite.yaml"
 ARG mode="server"
 ARG launcher
 
 # Run stable tests first
-RUN LOGS_PATH="/logs" \
+RUN LOGS_PATH="/out" \
     ./connectconformance \
     --conf $config \
     --mode $mode \
     -v -vv --trace \
     -- \
-    /app/bin/conformance $launcher
+    /app/bin/conformance $launcher; \
+    echo $? > /out/exit_code
 
 FROM scratch AS export
 
-COPY --link --from=runner /logs /
+COPY --link --from=runner /out /
