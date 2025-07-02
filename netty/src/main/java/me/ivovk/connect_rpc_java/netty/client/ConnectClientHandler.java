@@ -23,7 +23,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-public class ConnectRpcClientHandler<Resp extends Message>
+/** A Netty handler for processing responses from a Connect RPC server. */
+public class ConnectClientHandler<Resp extends Message>
     extends SimpleChannelInboundHandler<HttpObject> {
 
   private static final InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
@@ -34,7 +35,7 @@ public class ConnectRpcClientHandler<Resp extends Message>
   private final JsonMarshallerFactory marshallerFactory;
   private final ClientCall.Listener<Resp> responseListener;
 
-  public ConnectRpcClientHandler(
+  public ConnectClientHandler(
       MethodDescriptor<?, Resp> methodDescriptor,
       HeaderMapping<HttpHeaders> headerMapping,
       JsonMarshallerFactory marshallerFactory,

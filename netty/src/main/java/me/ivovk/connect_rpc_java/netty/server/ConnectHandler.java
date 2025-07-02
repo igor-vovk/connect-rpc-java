@@ -65,8 +65,6 @@ public class ConnectHandler {
       callOptions = callOptions.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS);
     }
 
-    var call = channel.newCall(method.descriptor(), callOptions);
-
     return ClientCalls.unaryCall(
             channel, method.descriptor(), callOptions, request.headerMetadata(), request.message())
         .thenApply(

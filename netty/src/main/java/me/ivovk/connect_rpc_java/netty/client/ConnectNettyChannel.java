@@ -75,7 +75,7 @@ public class ConnectNettyChannel extends Channel implements AutoCloseable {
                       .addLast(new HttpClientCodec())
                       .addLast(new HttpObjectAggregator(1048576))
                       .addLast(
-                          new ConnectRpcClientHandler<>(
+                          new ConnectClientHandler<>(
                               methodDescriptor,
                               headerMapping,
                               jsonMarshallerFactory,
