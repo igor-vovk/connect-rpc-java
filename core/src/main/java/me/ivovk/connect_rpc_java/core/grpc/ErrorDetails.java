@@ -29,6 +29,11 @@ public final class ErrorDetails {
   }
 
   public static Optional<ErrorDetailsAny> extract(Metadata metadata) {
-    return Optional.ofNullable(metadata.get(ERROR_DETAILS_KEY));
+    var details = metadata.get(ERROR_DETAILS_KEY);
+    if (details != null) {
+      metadata.discardAll(ERROR_DETAILS_KEY);
+    }
+    
+    return Optional.ofNullable(details);
   }
 }
