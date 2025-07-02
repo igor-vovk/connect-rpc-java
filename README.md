@@ -100,7 +100,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 Run the following command to run Connect-RPC conformance tests:
 
 ```shell
-make test-conformance profile=netty-server
+make test-conformance
 ```
 
 Execution results are output to STDOUT.
