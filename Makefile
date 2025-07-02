@@ -7,9 +7,13 @@ DOCKER_BUILD_CMD = docker build -f conformance-build/Dockerfile . --progress=pla
 .PHONY: all
 all: test-conformance-all
 
+.PHONY: fmt
+fmt:
+	./gradlew spotlessApply
+
 .PHONY: build
 build:
-	./gradlew clean spotlessApply :conformance:build
+	./gradlew clean :conformance:build
 	@rm -rf build/conformance-1.0.0
 	@unzip -oq conformance/build/distributions/conformance-1.0.0.zip -d build
 

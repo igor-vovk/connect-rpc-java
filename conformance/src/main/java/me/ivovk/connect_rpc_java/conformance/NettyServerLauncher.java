@@ -28,17 +28,13 @@ public class NettyServerLauncher {
   public static void main(String[] args) throws Exception {
     var serde = LengthPrefixedProtoSerde.forSystemInOut();
     // Must read the request from STDIN, even though it is not used.
-    var req = serde.read(ServerCompatRequest.parser());
+    var req = serde.read(ServerCompatRequest.getDefaultInstance());
 
     var service = new ConformanceServiceImpl();
 
     var server =
         ConnectNettyServerBuilder.forServices(service)
-            .serverBuilderConfigurer(
-                sb -> {
-                  // sb.intercept(new ErrorLoggingInterceptor());
-                  return sb.intercept(new MetadataInterceptor());
-                })
+            .serverBuilderConfigurer(sb -> sb.intercept(new MetadataInterceptor()))
             // Registering message types in TypeRegistry is required to pass
             // com.google.protobuf.any.Any
             // JSON-serialization conformance tests
