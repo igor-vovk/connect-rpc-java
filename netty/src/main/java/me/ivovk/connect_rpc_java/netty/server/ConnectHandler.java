@@ -1,4 +1,4 @@
-package me.ivovk.connect_rpc_java.netty.connect;
+package me.ivovk.connect_rpc_java.netty.server;
 
 import io.grpc.CallOptions;
 import io.grpc.Channel;
@@ -11,8 +11,6 @@ import me.ivovk.connect_rpc_java.core.grpc.ClientCalls;
 import me.ivovk.connect_rpc_java.core.grpc.GrpcHeaders;
 import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
-import me.ivovk.connect_rpc_java.netty.RequestEntity;
-import me.ivovk.connect_rpc_java.netty.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +60,9 @@ public class ConnectHandler {
     }
 
     var callOptions = CallOptions.DEFAULT;
-    var timeout = Optional.ofNullable(request.headerMetadata().get(GrpcHeaders.CONNECT_TIMEOUT_MS));
-    if (timeout.isPresent()) {
-      callOptions = callOptions.withDeadlineAfter(timeout.get(), TimeUnit.MILLISECONDS);
+    var timeout = request.headerMetadata().get(GrpcHeaders.CONNECT_TIMEOUT_MS);
+    if (timeout != null) {
+      callOptions = callOptions.withDeadlineAfter(timeout, TimeUnit.MILLISECONDS);
     }
 
     var call = channel.newCall(method.descriptor(), callOptions);
