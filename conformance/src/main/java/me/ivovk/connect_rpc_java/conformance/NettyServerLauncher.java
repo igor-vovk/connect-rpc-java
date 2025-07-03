@@ -3,11 +3,9 @@ package me.ivovk.connect_rpc_java.conformance;
 import connectrpc.conformance.v1.*;
 import me.ivovk.connect_rpc_java.conformance.interceptors.MetadataInterceptor;
 import me.ivovk.connect_rpc_java.conformance.util.LengthPrefixedProtoSerde;
-import me.ivovk.connect_rpc_java.netty.NettyServerBuilder;
+import me.ivovk.connect_rpc_java.netty.ConnectNettyServerBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * Flow:
@@ -23,40 +21,37 @@ import java.util.List;
  * <p><a
  * href="https://github.com/connectrpc/conformance/blob/main/docs/configuring_and_running_tests.md">...</a>
  */
-public class ServerLauncher {
+public class NettyServerLauncher {
 
-  private static final Logger logger = LoggerFactory.getLogger(ServerLauncher.class);
+  private static final Logger logger = LoggerFactory.getLogger(NettyServerLauncher.class);
 
-  public static void main(String[] args) throws Exception {
-    var serde = LengthPrefixedProtoSerde.forSystemInOut();
-    var req = serde.read(ServerCompatRequest.parser());
+  private final LengthPrefixedProtoSerde serde;
+
+  public NettyServerLauncher(LengthPrefixedProtoSerde serde) {
+    this.serde = serde;
+  }
+
+  public void run() throws Exception {
+    // Must read the request from STDIN, even though it is not used.
+    serde.read(ServerCompatRequest.getDefaultInstance());
 
     var service = new ConformanceServiceImpl();
 
     var server =
-        NettyServerBuilder.forServices(service)
-            .serverBuilderConfigurer(
-                sb -> {
-                  // sb.intercept(new ErrorLoggingInterceptor());
-                  return sb.intercept(new MetadataInterceptor());
-                })
+        ConnectNettyServerBuilder.forServices(service)
+            .serverBuilderConfigurer(sb -> sb.intercept(new MetadataInterceptor()))
             // Registering message types in TypeRegistry is required to pass
-            // com.google.protobuf.any.Any
-            // JSON-serialization conformance tests
+            // google.protobuf.Any JSON-serialization conformance tests
             .jsonTypeRegistryConfigurer(
                 b ->
-                    b.add(
-                        List.of(
-                            UnaryRequest.getDescriptor(), IdempotentUnaryRequest.getDescriptor())))
+                    b.add(UnaryRequest.getDescriptor()).add(IdempotentUnaryRequest.getDescriptor()))
             .build();
 
-    var resp =
+    serde.write(
         ServerCompatResponse.newBuilder()
             .setHost(server.getHost())
             .setPort(server.getPort())
-            .build();
-
-    serde.write(resp);
+            .build());
 
     System.err.println("Netty Server started on " + server.getHost() + ":" + server.getPort());
     logger.info("Netty Server started on {}:{}", server.getHost(), server.getPort());

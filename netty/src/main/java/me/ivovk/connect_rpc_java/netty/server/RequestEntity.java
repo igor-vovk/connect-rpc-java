@@ -1,4 +1,4 @@
-package me.ivovk.connect_rpc_java.netty;
+package me.ivovk.connect_rpc_java.netty.server;
 
 import com.google.protobuf.Message;
 import io.grpc.Metadata;
