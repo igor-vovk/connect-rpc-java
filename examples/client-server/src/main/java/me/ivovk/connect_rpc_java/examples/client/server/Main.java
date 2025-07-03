@@ -40,8 +40,7 @@ public class Main {
     logger.info("Server started, listening on {}", server.getPort());
 
     // Create a ConnectRPC client
-    ManagedChannel channel =
-        ConnectNettyChannelBuilder.forAddress("localhost", 8080).build();
+    ManagedChannel channel = ConnectNettyChannelBuilder.forAddress("localhost", 8080).build();
 
     GreetServiceGrpc.GreetServiceBlockingStub stub = GreetServiceGrpc.newBlockingStub(channel);
 
