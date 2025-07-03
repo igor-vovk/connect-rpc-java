@@ -13,3 +13,4 @@ rootProject.name = "connect-rpc-java"
 include("core")
 include("netty")
 include("conformance")
+include("examples:client-server")
