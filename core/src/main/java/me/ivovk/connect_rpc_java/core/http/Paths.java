@@ -36,8 +36,8 @@ public class Paths {
     }
   }
 
-  public static Optional<Path> extractPathSegments(String path) {
-    return extractPathSegments(path, Path.ROOT_PATH);
+  public static Path extractPathSegments(String path) {
+    return extractPathSegments(path, Path.ROOT_PATH).get();
   }
 
   public static Optional<Path> extractPathSegments(String path, Path prefix) {

@@ -11,40 +11,35 @@ class PathsTest {
   void testExtractPathSegmentsWithEmptyPath() {
     var result = Paths.extractPathSegments("");
 
-    assertTrue(result.isPresent());
-    assertEquals(Path.of(""), result.get());
+    assertEquals(Path.of(""), result);
   }
 
   @Test
   void testExtractPathSegmentsWithRootPath() {
     var result = Paths.extractPathSegments("/");
 
-    assertTrue(result.isPresent());
-    assertEquals(Path.of(""), result.get());
+    assertEquals(Path.of(""), result);
   }
 
   @Test
   void testExtractPathSegmentsWithSimplePath() {
     var result = Paths.extractPathSegments("/api/v1/users");
 
-    assertTrue(result.isPresent());
-    assertEquals(Path.of("api", "v1", "users"), result.get());
+    assertEquals(Path.of("api", "v1", "users"), result);
   }
 
   @Test
   void testExtractPathSegmentsWithTrailingSlash() {
     var result = Paths.extractPathSegments("/api/v1/users/");
 
-    assertTrue(result.isPresent());
-    assertEquals(Path.of("api", "v1", "users"), result.get());
+    assertEquals(Path.of("api", "v1", "users"), result);
   }
 
   @Test
   void testExtractPathSegmentsWithPathWithoutLeadingSlash() {
     var result = Paths.extractPathSegments("api/v1/users");
 
-    assertTrue(result.isPresent());
-    assertEquals(Path.of("api", "v1", "users"), result.get());
+    assertEquals(Path.of("api", "v1", "users"), result);
   }
 
   @Test
