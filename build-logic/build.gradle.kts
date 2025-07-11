@@ -22,6 +22,6 @@ repositories {
 
 dependencies {
     implementation("com.google.protobuf:protobuf-gradle-plugin:0.9.5")
-    implementation("com.diffplug.spotless:spotless-plugin-gradle:7.0.4")
+    implementation("com.diffplug.spotless:spotless-plugin-gradle:7.1.0")
     implementation("com.vanniktech:gradle-maven-publish-plugin:0.33.0")
 }
