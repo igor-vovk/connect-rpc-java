@@ -13,7 +13,7 @@ grpc-core = { module = "io.grpc:grpc-core", version.ref = "grpc" }
 grpc-netty = { module = "io.grpc:grpc-netty", version.ref = "grpc" }
 grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
 grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
-grpc-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version = "2.59.0" }
+grpc-common-protos = { module = "com.google.api.grpc:proto-google-common-protos", version = "2.59.1" }
 grpc-inprocess = { module = "io.grpc:grpc-inprocess", version.ref = "grpc" }
 gson = { module = "com.google.code.gson:gson", version = "2.13.1" }
 protobuf-util = { module = "com.google.protobuf:protobuf-java-util", version.ref = "protobuf" }
