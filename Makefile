@@ -8,14 +8,14 @@ DOCKER_BUILD_CMD = docker build -f conformance-build/Dockerfile . --progress=pla
 fmt:
 	./gradlew spotlessApply
 
-.PHONY: build
-build:
+.PHONY: build-conformance
+build-conformance:
 	./gradlew :conformance:build
 	@rm -rf build/conformance-1.0.0
 	@unzip -oq conformance/build/distributions/conformance-1.0.0.zip -d build
 
 .PHONY: test-conformance
-test-conformance: build
+test-conformance: build-conformance
 ifeq ($(profile),netty-client)
 	@echo "Running conformance tests with profile: $(profile)"
 	$(DOCKER_BUILD_CMD) --build-arg config=suite-netty-client.yaml --build-arg launcher=netty-client --build-arg mode=client

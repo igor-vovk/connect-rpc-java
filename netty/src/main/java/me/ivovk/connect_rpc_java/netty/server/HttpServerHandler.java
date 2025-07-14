@@ -61,7 +61,7 @@ public class HttpServerHandler extends ChannelInboundHandlerAdapter {
                   });
 
       if (maybeGrpcMethod.isEmpty()) {
-        sendError(ctx, "Method not found", HttpResponseStatus.NOT_FOUND);
+        sendError(ctx, "Method not found, path " + maybePath, HttpResponseStatus.NOT_FOUND);
         return;
       }
 

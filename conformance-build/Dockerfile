@@ -1,4 +1,4 @@
-FROM gradle:8-jdk17 AS base
+FROM eclipse-temurin:17-jre AS base
 
 FROM ghcr.io/igor-vovk/connect-conformance-dockerimage:1.0.4-1 AS conformance
 
