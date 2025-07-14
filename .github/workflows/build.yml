@@ -29,23 +29,5 @@ jobs:
       - name: Build and Test
         run: gradle build test
 
-  conformance:
-    name: Conformance Tests
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        config:
-          - name: Netty server
-            profile: netty-server
-          - name: Netty server non-stable
-            profile: netty-server-nonstable
-          - name: Netty client
-            profile: netty-client
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run conformance tests for ${{ matrix.config.name }}
-        run: make test-conformance profile=${{ matrix.config.profile }}
+      - name: Conformance Tests
+        run: make test-conformance-stable
