@@ -21,18 +21,21 @@ public class ConnectNettyChannel extends ManagedChannel {
   private static final IoHandlerFactory ioHandlerFactory = NioIoHandler.newFactory();
   private final AtomicBoolean shutdown = new AtomicBoolean(false);
   private final ClientCallParams params;
+  private final Executor defaultExecutor;
 
   public ConnectNettyChannel(
       String host,
       int port,
       int timeout,
       HeaderMapping<HttpHeaders> headerMapping,
-      JsonMarshallerFactory jsonMarshallerFactory) {
+      JsonMarshallerFactory jsonMarshallerFactory,
+      Executor defaultExecutor) {
     var workerGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
 
     this.params =
         new ClientCallParams(
             timeout, workerGroup, host, port, headerMapping, jsonMarshallerFactory);
+    this.defaultExecutor = defaultExecutor;
   }
 
   @Override
@@ -63,7 +66,7 @@ public class ConnectNettyChannel extends ManagedChannel {
   Executor getCallExecutor(CallOptions callOptions) {
     Executor executor = callOptions.getExecutor();
     if (executor == null) {
-      return null;
+      return defaultExecutor;
     }
     return executor;
   }

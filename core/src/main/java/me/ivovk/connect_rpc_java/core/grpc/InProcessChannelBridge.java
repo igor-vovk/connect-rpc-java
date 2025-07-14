@@ -19,15 +19,15 @@ public class InProcessChannelBridge {
 
   public record ChannelContext(ManagedChannel channel, Server server, Duration terminationTimeout) {
     public void shutdown() throws InterruptedException {
-      if (logger.isTraceEnabled()) {
-        logger.trace("Shutting down channel and server");
-      }
-
       server.shutdown();
       channel.shutdown();
 
       server.awaitTermination(terminationTimeout.getSeconds(), TimeUnit.SECONDS);
       channel.awaitTermination(terminationTimeout.getSeconds(), TimeUnit.SECONDS);
+
+      if (logger.isTraceEnabled()) {
+        logger.trace("Channel and server shutdown complete");
+      }
     }
 
     public boolean isShutdown() {

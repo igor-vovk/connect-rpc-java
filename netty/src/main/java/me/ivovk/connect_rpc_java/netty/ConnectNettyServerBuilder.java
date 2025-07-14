@@ -216,8 +216,8 @@ public class ConnectNettyServerBuilder {
         () -> {
           try {
             channel.close().sync();
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully().sync();
+            workerGroup.shutdownGracefully().sync();
             channelContext.shutdown();
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

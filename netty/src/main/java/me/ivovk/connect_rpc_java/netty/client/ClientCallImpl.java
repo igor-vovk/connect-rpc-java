@@ -26,7 +26,7 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
 
   private final MethodDescriptor<Req, Resp> methodDescriptor;
   private final CallOptions callOptions;
-  @Nullable private final Executor callExecutor;
+  private final Executor callExecutor;
   private final ClientCallParams params;
 
   private Metadata metadata;
@@ -38,7 +38,7 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
       ClientCallParams params,
       MethodDescriptor<Req, Resp> methodDescriptor,
       CallOptions callOptions,
-      @Nullable Executor callExecutor) {
+      Executor callExecutor) {
     this.params = params;
     this.methodDescriptor = methodDescriptor;
     this.callOptions = callOptions;
@@ -50,65 +50,56 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
     this.metadata = metadata;
     this.responseListener = responseListener;
 
-    Runnable runnable =
-        () -> {
-          Deadline deadline = callOptions.getDeadline();
+    Deadline deadline = callOptions.getDeadline();
 
-          long timeoutMillis;
-          if (deadline != null) {
-            timeoutMillis = deadline.timeRemaining(TimeUnit.MILLISECONDS);
-          } else {
-            timeoutMillis = params.timeout;
-          }
-          if (timeoutMillis < 0) {
-            responseListener.onClose(
-                Status.DEADLINE_EXCEEDED.withDescription("Deadline exceeded before call started."),
-                new Metadata());
-            return;
-          }
-
-          var bootstrap = new Bootstrap();
-          bootstrap
-              .group(params.workerGroup)
-              .channel(NioSocketChannel.class)
-              .option(ChannelOption.TCP_NODELAY, true)
-              .option(
-                  ChannelOption.CONNECT_TIMEOUT_MILLIS,
-                  (int) Math.min(timeoutMillis, Integer.MAX_VALUE))
-              .handler(
-                  new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    public void initChannel(SocketChannel ch) {
-                      ChannelPipeline p = ch.pipeline();
-                      p.addLast(new ReadTimeoutHandler(timeoutMillis, TimeUnit.MILLISECONDS));
-                      p.addLast(new HttpClientCodec());
-                      p.addLast(new HttpObjectAggregator(1048576));
-                      p.addLast(
-                          new ConnectClientHandler<>(
-                              methodDescriptor,
-                              params.headerMapping,
-                              params.jsonMarshallerFactory,
-                              responseListener));
-                    }
-                  });
-
-          var connectFuture = bootstrap.connect(params.host, params.port);
-          nettyChannel = connectFuture.channel();
-          connectFuture.addListener(
-              f -> {
-                if (f.isSuccess()) {
-                  maybeSendRequest();
-                } else {
-                  responseListener.onClose(Status.fromThrowable(f.cause()), new Metadata());
-                }
-              });
-        };
-
-    if (callExecutor == null) {
-      runnable.run();
+    long timeoutMillis;
+    if (deadline != null) {
+      timeoutMillis = deadline.timeRemaining(TimeUnit.MILLISECONDS);
     } else {
-      callExecutor.execute(runnable);
+      timeoutMillis = params.timeout;
     }
+    if (timeoutMillis < 0) {
+      responseListener.onClose(
+          Status.DEADLINE_EXCEEDED.withDescription("Deadline exceeded before call started."),
+          new Metadata());
+      return;
+    }
+
+    var bootstrap = new Bootstrap();
+    bootstrap
+        .group(params.workerGroup)
+        .channel(NioSocketChannel.class)
+        .option(ChannelOption.TCP_NODELAY, true)
+        .option(
+            ChannelOption.CONNECT_TIMEOUT_MILLIS, (int) Math.min(timeoutMillis, Integer.MAX_VALUE))
+        .handler(
+            new ChannelInitializer<SocketChannel>() {
+              @Override
+              public void initChannel(SocketChannel ch) {
+                ChannelPipeline p = ch.pipeline();
+                p.addLast(new ReadTimeoutHandler(timeoutMillis, TimeUnit.MILLISECONDS));
+                p.addLast(new HttpClientCodec());
+                p.addLast(new HttpObjectAggregator(1048576));
+                p.addLast(
+                    new ConnectClientHandler<>(
+                        methodDescriptor,
+                        params.headerMapping,
+                        params.jsonMarshallerFactory,
+                        responseListener,
+                        callExecutor));
+              }
+            });
+
+    var connectFuture = bootstrap.connect(params.host, params.port);
+    nettyChannel = connectFuture.channel();
+    connectFuture.addListener(
+        f -> {
+          if (f.isSuccess()) {
+            maybeSendRequest();
+          } else {
+            responseListener.onClose(Status.fromThrowable(f.cause()), new Metadata());
+          }
+        });
   }
 
   @Override

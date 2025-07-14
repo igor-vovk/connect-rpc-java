@@ -53,9 +53,11 @@ public class Main {
       logger.error("Client call failed: ", e);
     } finally {
       channel.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      logger.info("Client channel shut down");
     }
 
     // Shut down the server
     server.shutdown();
+    logger.info("Server shut down");
   }
 }

@@ -6,12 +6,16 @@ import me.ivovk.connect_rpc_java.core.Configurer;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import me.ivovk.connect_rpc_java.netty.client.ConnectNettyChannel;
 
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+
 public class ConnectNettyChannelBuilder {
 
   private String host;
   private int port;
   private Configurer<TypeRegistry.Builder> jsonTypeRegistryConfigurer = Configurer.noop();
   private int timeoutMs = 0;
+  private Executor executor = Executors.newCachedThreadPool();
 
   private ConnectNettyChannelBuilder() {}
 
@@ -36,6 +40,11 @@ public class ConnectNettyChannelBuilder {
     return this;
   }
 
+  public ConnectNettyChannelBuilder executor(Executor executor) {
+    this.executor = executor;
+    return this;
+  }
+
   public ManagedChannel build() {
     var headerMapping =
         new NettyHeaderMapping(
@@ -44,6 +53,7 @@ public class ConnectNettyChannelBuilder {
     var jsonTypeRegistry = jsonTypeRegistryConfigurer.configure(TypeRegistry.newBuilder()).build();
     var jsonMarshallerFactory = new JsonMarshallerFactory(jsonTypeRegistry);
 
-    return new ConnectNettyChannel(host, port, timeoutMs, headerMapping, jsonMarshallerFactory);
+    return new ConnectNettyChannel(
+        host, port, timeoutMs, headerMapping, jsonMarshallerFactory, executor);
   }
 }

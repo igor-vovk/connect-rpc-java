@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.util.concurrent.Executor;
 
 /** A Netty handler for processing responses from a Connect RPC server. */
 public class ConnectClientHandler<Resp extends Message>
@@ -36,16 +37,19 @@ public class ConnectClientHandler<Resp extends Message>
   private final HeaderMapping<HttpHeaders> headerMapping;
   private final JsonMarshallerFactory marshallerFactory;
   private final ClientCall.Listener<Resp> responseListener;
+  private final Executor executor;
 
   public ConnectClientHandler(
       MethodDescriptor<?, Resp> methodDescriptor,
       HeaderMapping<HttpHeaders> headerMapping,
       JsonMarshallerFactory marshallerFactory,
-      ClientCall.Listener<Resp> responseListener) {
+      ClientCall.Listener<Resp> responseListener,
+      Executor executor) {
     this.methodDescriptor = methodDescriptor;
     this.headerMapping = headerMapping;
     this.marshallerFactory = marshallerFactory;
     this.responseListener = responseListener;
+    this.executor = executor;
   }
 
   @Override
@@ -60,7 +64,7 @@ public class ConnectClientHandler<Resp extends Message>
       var metadata = headerMapping.toMetadata(httpResponse.headers());
       var hat = GrpcHeaders.splitIntoHeadersAndTrailers(metadata);
 
-      responseListener.onHeaders(hat.headers());
+      executor.execute(() -> responseListener.onHeaders(hat.headers()));
 
       var responseStatus = httpResponse.status();
       var responseContentStream = new ByteBufInputStream(httpResponse.content(), false);
@@ -70,8 +74,8 @@ public class ConnectClientHandler<Resp extends Message>
         var responseMessage =
             marshallerFactory.jsonMarshaller(defaultMessage).parse(responseContentStream);
 
-        responseListener.onMessage(responseMessage);
-        responseListener.onClose(Status.OK, hat.trailers());
+        executor.execute(() -> responseListener.onMessage(responseMessage));
+        executor.execute(() -> responseListener.onClose(Status.OK, hat.trailers()));
       } else {
         var error =
             marshallerFactory
@@ -94,7 +98,7 @@ public class ConnectClientHandler<Resp extends Message>
           ErrorDetails.injectDetails(hat.trailers(), details);
         }
 
-        responseListener.onClose(status, hat.trailers());
+        executor.execute(() -> responseListener.onClose(status, hat.trailers()));
       }
 
       ctx.close();
@@ -103,10 +107,13 @@ public class ConnectClientHandler<Resp extends Message>
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-    if (cause == ReadTimeoutException.INSTANCE) {
-      responseListener.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+    if (cause instanceof ReadTimeoutException) {
+      executor.execute(() -> responseListener.onClose(Status.DEADLINE_EXCEEDED, new Metadata()));
     } else {
-      responseListener.onClose(Status.fromThrowable(cause), Status.trailersFromThrowable(cause));
+      executor.execute(
+          () ->
+              responseListener.onClose(
+                  Status.fromThrowable(cause), Status.trailersFromThrowable(cause)));
     }
 
     ctx.close();
