@@ -91,6 +91,10 @@ var server = ConnectNettyServerBuilder
 Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 ```
 
+## Examples
+
+* Client-Server communication using Connect RPC protocol instead of GRPC: [link](https://github.com/igor-vovk/connect-rpc-java/tree/main/examples/client-server)
+
 ## Development
 
 ### Connect RPC

@@ -5,7 +5,6 @@ import io.grpc.CallOptions;
 import io.grpc.ClientCall;
 import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.IoHandlerFactory;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
@@ -20,13 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ConnectNettyChannel extends ManagedChannel {
 
   private static final IoHandlerFactory ioHandlerFactory = NioIoHandler.newFactory();
-  private final String host;
-  private final int port;
-  private final int timeout;
-  private final HeaderMapping<HttpHeaders> headerMapping;
-  private final JsonMarshallerFactory jsonMarshallerFactory;
-  private final EventLoopGroup workerGroup;
   private final AtomicBoolean shutdown = new AtomicBoolean(false);
+  private final ClientCallParams params;
 
   public ConnectNettyChannel(
       String host,
@@ -34,12 +28,11 @@ public class ConnectNettyChannel extends ManagedChannel {
       int timeout,
       HeaderMapping<HttpHeaders> headerMapping,
       JsonMarshallerFactory jsonMarshallerFactory) {
-    this.host = host;
-    this.port = port;
-    this.timeout = timeout;
-    this.headerMapping = headerMapping;
-    this.jsonMarshallerFactory = jsonMarshallerFactory;
-    this.workerGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
+    var workerGroup = new MultiThreadIoEventLoopGroup(1, ioHandlerFactory);
+
+    this.params =
+        new ClientCallParams(
+            timeout, workerGroup, host, port, headerMapping, jsonMarshallerFactory);
   }
 
   @Override
@@ -57,22 +50,14 @@ public class ConnectNettyChannel extends ManagedChannel {
     ClientCall<Req, Resp> clientCall =
         (ClientCall<Req, Resp>)
             new ClientCallImpl<>(
-                methodDescriptor,
-                callOptions,
-                timeout,
-                workerGroup,
-                host,
-                port,
-                headerMapping,
-                jsonMarshallerFactory,
-                getCallExecutor(callOptions));
+                params, methodDescriptor, callOptions, getCallExecutor(callOptions));
 
     return clientCall;
   }
 
   @Override
   public String authority() {
-    return host + ":" + port;
+    return params.hostname;
   }
 
   Executor getCallExecutor(CallOptions callOptions) {
@@ -86,7 +71,7 @@ public class ConnectNettyChannel extends ManagedChannel {
   @Override
   public ManagedChannel shutdown() {
     if (shutdown.compareAndSet(false, true)) {
-      workerGroup.shutdownGracefully();
+      params.workerGroup.shutdownGracefully();
     }
     return this;
   }
@@ -98,7 +83,7 @@ public class ConnectNettyChannel extends ManagedChannel {
 
   @Override
   public boolean isTerminated() {
-    return workerGroup.isTerminated();
+    return params.workerGroup.isTerminated();
   }
 
   @Override
@@ -110,7 +95,7 @@ public class ConnectNettyChannel extends ManagedChannel {
   @Override
   public boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException {
     if (shutdown.compareAndSet(false, true)) {
-      workerGroup.shutdownGracefully(0, timeout, unit);
+      params.workerGroup.shutdownGracefully(0, timeout, unit);
     }
 
     return isTerminated();

@@ -10,13 +10,10 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
-import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.timeout.ReadTimeoutHandler;
-import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
-import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,16 +22,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
-  private final Logger logger = LoggerFactory.getLogger(getClass());
+  private static final Logger logger = LoggerFactory.getLogger(ClientCallImpl.class);
+
   private final MethodDescriptor<Req, Resp> methodDescriptor;
   private final CallOptions callOptions;
-  private final int timeout;
-  private final EventLoopGroup workerGroup;
-  private final String host;
-  private final int port;
-  private final HeaderMapping<HttpHeaders> headerMapping;
-  private final JsonMarshallerFactory jsonMarshallerFactory;
-  private final Executor callExecutor;
+  @Nullable private final Executor callExecutor;
+  private final ClientCallParams params;
 
   private Metadata metadata;
   private Listener<Resp> responseListener;
@@ -42,23 +35,13 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
   private Req messageToSend;
 
   public ClientCallImpl(
+      ClientCallParams params,
       MethodDescriptor<Req, Resp> methodDescriptor,
       CallOptions callOptions,
-      int timeout,
-      EventLoopGroup workerGroup,
-      String host,
-      int port,
-      HeaderMapping<HttpHeaders> headerMapping,
-      JsonMarshallerFactory jsonMarshallerFactory,
-      Executor callExecutor) {
+      @Nullable Executor callExecutor) {
+    this.params = params;
     this.methodDescriptor = methodDescriptor;
     this.callOptions = callOptions;
-    this.timeout = timeout;
-    this.workerGroup = workerGroup;
-    this.host = host;
-    this.port = port;
-    this.headerMapping = headerMapping;
-    this.jsonMarshallerFactory = jsonMarshallerFactory;
     this.callExecutor = callExecutor;
   }
 
@@ -75,7 +58,7 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
           if (deadline != null) {
             timeoutMillis = deadline.timeRemaining(TimeUnit.MILLISECONDS);
           } else {
-            timeoutMillis = timeout;
+            timeoutMillis = params.timeout;
           }
           if (timeoutMillis < 0) {
             responseListener.onClose(
@@ -86,7 +69,7 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
 
           var bootstrap = new Bootstrap();
           bootstrap
-              .group(workerGroup)
+              .group(params.workerGroup)
               .channel(NioSocketChannel.class)
               .option(ChannelOption.TCP_NODELAY, true)
               .option(
@@ -103,13 +86,13 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
                       p.addLast(
                           new ConnectClientHandler<>(
                               methodDescriptor,
-                              headerMapping,
-                              jsonMarshallerFactory,
+                              params.headerMapping,
+                              params.jsonMarshallerFactory,
                               responseListener));
                     }
                   });
 
-          var connectFuture = bootstrap.connect(host, port);
+          var connectFuture = bootstrap.connect(params.host, params.port);
           nettyChannel = connectFuture.channel();
           connectFuture.addListener(
               f -> {
@@ -166,7 +149,7 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
       ByteBuf content;
       if (messageToSend instanceof Message message1) {
         byte[] bytes =
-            jsonMarshallerFactory.jsonMarshaller(message1).stream(message1).readAllBytes();
+            params.jsonMarshallerFactory.jsonMarshaller(message1).stream(message1).readAllBytes();
         content = Unpooled.wrappedBuffer(bytes);
       } else {
         throw new IllegalArgumentException(
@@ -183,11 +166,11 @@ class ClientCallImpl<Req, Resp extends Message> extends ClientCall<Req, Resp> {
       var headers = httpRequest.headers();
 
       headers
-          .add(HttpHeaderNames.HOST, host + ":" + port)
+          .add(HttpHeaderNames.HOST, params.hostname)
           .add(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE)
           .add(HttpHeaderNames.CONTENT_LENGTH, content.readableBytes())
           .add(HttpHeaderNames.CONTENT_TYPE, "application/json")
-          .add(headerMapping.toHeaders(this.metadata));
+          .add(params.headerMapping.toHeaders(this.metadata));
 
       var deadline = callOptions.getDeadline();
       if (deadline != null) {
