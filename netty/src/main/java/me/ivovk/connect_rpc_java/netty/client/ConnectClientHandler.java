@@ -52,6 +52,7 @@ public class ConnectClientHandler<Resp extends Message>
   protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) {
     if (msg instanceof FullHttpResponse httpResponse) {
       if (logger.isTraceEnabled()) {
+        logger.trace("<<< Response status: {}", httpResponse.status());
         logger.trace("<<< Response headers: {}", httpResponse.headers());
         logger.trace(
             "<<< Response content: {}", httpResponse.content().toString(Charset.defaultCharset()));

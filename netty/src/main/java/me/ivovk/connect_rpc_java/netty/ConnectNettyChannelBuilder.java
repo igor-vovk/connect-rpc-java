@@ -1,7 +1,7 @@
 package me.ivovk.connect_rpc_java.netty;
 
 import com.google.protobuf.TypeRegistry;
-import io.grpc.Channel;
+import io.grpc.ManagedChannel;
 import me.ivovk.connect_rpc_java.core.Configurer;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
 import me.ivovk.connect_rpc_java.netty.client.ConnectNettyChannel;
@@ -36,7 +36,7 @@ public class ConnectNettyChannelBuilder {
     return this;
   }
 
-  public Channel build() {
+  public ManagedChannel build() {
     var headerMapping =
         new NettyHeaderMapping(
             h -> !h.equalsIgnoreCase("Connection"), h -> !h.equalsIgnoreCase("Connection"), true);

@@ -1,7 +1,6 @@
 package me.ivovk.connect_rpc_java.core.http.json;
 
 import com.google.gson.Gson;
-import com.google.protobuf.Message;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 
@@ -9,7 +8,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-public class GsonMarshaller<T extends Message> implements MethodDescriptor.Marshaller<T> {
+public class GsonMarshaller<T> implements MethodDescriptor.Marshaller<T> {
 
   private static final Charset charset = StandardCharsets.UTF_8;
 
