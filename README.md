@@ -104,7 +104,7 @@ Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 Run the following command to run Connect-RPC conformance tests:
 
 ```shell
-make test-conformance
+make test-conformance-stable
 ```
 
 Execution results are output to STDOUT.
