@@ -27,7 +27,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build and Test
-        run: gradle build test
+        run: ./gradlew build test
 
       - name: Conformance Tests
         run: make test-conformance-stable
