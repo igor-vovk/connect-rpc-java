@@ -25,8 +25,10 @@ import me.ivovk.connect_rpc_java.core.grpc.MethodRegistry;
 import me.ivovk.connect_rpc_java.core.http.HeaderMapping;
 import me.ivovk.connect_rpc_java.core.http.Paths;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
-import me.ivovk.connect_rpc_java.netty.connect.ConnectErrorHandler;
-import me.ivovk.connect_rpc_java.netty.connect.ConnectHandler;
+import me.ivovk.connect_rpc_java.netty.server.ConnectErrorHandler;
+import me.ivovk.connect_rpc_java.netty.server.ConnectHandler;
+import me.ivovk.connect_rpc_java.netty.server.HttpServerHandler;
+import me.ivovk.connect_rpc_java.netty.server.NettyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,9 +41,9 @@ import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class NettyServerBuilder {
+public class ConnectNettyServerBuilder {
 
-  private static final Logger logger = LoggerFactory.getLogger(NettyServerBuilder.class);
+  private static final Logger logger = LoggerFactory.getLogger(ConnectNettyServerBuilder.class);
 
   private static final String DEFAULT_HOST = "0.0.0.0";
   private static final int DEFAULT_PORT = 0;
@@ -60,95 +62,95 @@ public class NettyServerBuilder {
   private String host = DEFAULT_HOST;
   private int port = DEFAULT_PORT;
 
-  private NettyServerBuilder() {}
+  private ConnectNettyServerBuilder() {}
 
-  public static NettyServerBuilder forServices(BindableService... services) {
+  public static ConnectNettyServerBuilder forServices(BindableService... services) {
     var serverServiceDefinitions = Stream.of(services).map(BindableService::bindService).toList();
 
     return forServices(serverServiceDefinitions);
   }
 
-  public static NettyServerBuilder forServices(ServerServiceDefinition... services) {
+  public static ConnectNettyServerBuilder forServices(ServerServiceDefinition... services) {
     return forServices(List.of(services));
   }
 
-  private static NettyServerBuilder forServices(List<ServerServiceDefinition> services) {
-    NettyServerBuilder builder = new NettyServerBuilder();
+  private static ConnectNettyServerBuilder forServices(List<ServerServiceDefinition> services) {
+    ConnectNettyServerBuilder builder = new ConnectNettyServerBuilder();
     builder.services = services;
 
     return builder;
   }
 
-  public NettyServerBuilder serverBuilderConfigurer(
+  public ConnectNettyServerBuilder serverBuilderConfigurer(
       Configurer<ServerBuilder<?>> serverBuilderConfigurer) {
     this.serverBuilderConfigurer = serverBuilderConfigurer;
 
     return this;
   }
 
-  public NettyServerBuilder channelBuilderConfigurer(
+  public ConnectNettyServerBuilder channelBuilderConfigurer(
       Configurer<ManagedChannelBuilder<?>> channelBuilderConfigurer) {
     this.channelBuilderConfigurer = channelBuilderConfigurer;
 
     return this;
   }
 
-  public NettyServerBuilder jsonTypeRegistryConfigurer(
+  public ConnectNettyServerBuilder jsonTypeRegistryConfigurer(
       Configurer<TypeRegistry.Builder> jsonTypeRegistryConfigurer) {
     this.jsonTypeRegistryConfigurer = jsonTypeRegistryConfigurer;
 
     return this;
   }
 
-  public NettyServerBuilder incomingHeadersFilter(Predicate<String> incomingHeadersFilter) {
+  public ConnectNettyServerBuilder incomingHeadersFilter(Predicate<String> incomingHeadersFilter) {
     this.incomingHeadersFilter = incomingHeadersFilter;
 
     return this;
   }
 
-  public NettyServerBuilder outgoingHeadersFilter(Predicate<String> outgoingHeadersFilter) {
+  public ConnectNettyServerBuilder outgoingHeadersFilter(Predicate<String> outgoingHeadersFilter) {
     this.outgoingHeadersFilter = outgoingHeadersFilter;
 
     return this;
   }
 
-  public NettyServerBuilder pathPrefix(Paths.Path pathPrefix) {
+  public ConnectNettyServerBuilder pathPrefix(Paths.Path pathPrefix) {
     this.pathPrefix = pathPrefix;
 
     return this;
   }
 
-  public NettyServerBuilder executor(Executor executor) {
+  public ConnectNettyServerBuilder executor(Executor executor) {
     this.executor = executor;
 
     return this;
   }
 
-  public NettyServerBuilder terminationTimeout(Duration terminationTimeout) {
+  public ConnectNettyServerBuilder terminationTimeout(Duration terminationTimeout) {
     this.terminationTimeout = terminationTimeout;
 
     return this;
   }
 
-  public NettyServerBuilder treatTrailersAsHeaders(boolean treatTrailersAsHeaders) {
+  public ConnectNettyServerBuilder treatTrailersAsHeaders(boolean treatTrailersAsHeaders) {
     this.treatTrailersAsHeaders = treatTrailersAsHeaders;
 
     return this;
   }
 
-  public NettyServerBuilder enableLogging(boolean enableLogging) {
+  public ConnectNettyServerBuilder enableLogging(boolean enableLogging) {
     this.enableLogging = enableLogging;
 
     return this;
   }
 
-  public NettyServerBuilder host(String host) {
+  public ConnectNettyServerBuilder host(String host) {
     this.host = host;
 
     return this;
   }
 
-  public NettyServerBuilder port(int port) {
+  public ConnectNettyServerBuilder port(int port) {
     this.port = port;
 
     return this;
@@ -214,8 +216,8 @@ public class NettyServerBuilder {
         () -> {
           try {
             channel.close().sync();
-            bossGroup.shutdownGracefully();
-            workerGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully().sync();
+            workerGroup.shutdownGracefully().sync();
             channelContext.shutdown();
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

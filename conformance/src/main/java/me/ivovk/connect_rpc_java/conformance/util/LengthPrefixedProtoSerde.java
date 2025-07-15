@@ -6,6 +6,7 @@ import com.google.protobuf.Parser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import javax.annotation.Nullable;
 
 public class LengthPrefixedProtoSerde {
 
@@ -21,8 +22,15 @@ public class LengthPrefixedProtoSerde {
     return new LengthPrefixedProtoSerde(System.in, System.out);
   }
 
-  public <I> I read(Parser<I> parser) throws IOException {
+  @Nullable
+  public <T extends MessageLite> T read(T defaultInstance) throws IOException {
     var requestSize = IntSerde.read(in);
+    if (requestSize == null) {
+      return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    Parser<T> parser = (Parser<T>) defaultInstance.getParserForType();
 
     return parser.parseFrom(in.readNBytes(requestSize));
   }

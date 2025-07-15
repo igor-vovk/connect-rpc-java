@@ -14,6 +14,13 @@ public class Paths {
       return new Path(segments);
     }
 
+    public String segment(int index) {
+      if (index < 0 || index >= segments.length) {
+        throw new IndexOutOfBoundsException("Index: " + index + ", Length: " + segments.length);
+      }
+      return segments[index];
+    }
+
     public int length() {
       return segments.length;
     }
