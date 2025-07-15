@@ -63,8 +63,8 @@ public class ConnectNettyChannel extends ManagedChannel {
     return params.hostname;
   }
 
-  Executor getCallExecutor(CallOptions callOptions) {
-    Executor executor = callOptions.getExecutor();
+  private Executor getCallExecutor(CallOptions callOptions) {
+    var executor = callOptions.getExecutor();
     if (executor == null) {
       return defaultExecutor;
     }

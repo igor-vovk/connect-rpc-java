@@ -4,10 +4,10 @@ import com.google.protobuf.TypeRegistry;
 import io.grpc.ManagedChannel;
 import me.ivovk.connect_rpc_java.core.Configurer;
 import me.ivovk.connect_rpc_java.core.http.json.JsonMarshallerFactory;
+import me.ivovk.connect_rpc_java.core.utils.SameThreadExecutor;
 import me.ivovk.connect_rpc_java.netty.client.ConnectNettyChannel;
 
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class ConnectNettyChannelBuilder {
 
@@ -15,7 +15,7 @@ public class ConnectNettyChannelBuilder {
   private int port;
   private Configurer<TypeRegistry.Builder> jsonTypeRegistryConfigurer = Configurer.noop();
   private int timeoutMs = 0;
-  private Executor executor = Executors.newCachedThreadPool();
+  private Executor executor = SameThreadExecutor.INSTANCE;
 
   private ConnectNettyChannelBuilder() {}
 

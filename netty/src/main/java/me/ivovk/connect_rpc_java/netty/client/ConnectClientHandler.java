@@ -74,8 +74,11 @@ public class ConnectClientHandler<Resp extends Message>
         var responseMessage =
             marshallerFactory.jsonMarshaller(defaultMessage).parse(responseContentStream);
 
-        executor.execute(() -> responseListener.onMessage(responseMessage));
-        executor.execute(() -> responseListener.onClose(Status.OK, hat.trailers()));
+        executor.execute(
+            () -> {
+              responseListener.onMessage(responseMessage);
+              responseListener.onClose(Status.OK, hat.trailers());
+            });
       } else {
         var error =
             marshallerFactory
@@ -107,14 +110,15 @@ public class ConnectClientHandler<Resp extends Message>
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-    if (cause instanceof ReadTimeoutException) {
-      executor.execute(() -> responseListener.onClose(Status.DEADLINE_EXCEEDED, new Metadata()));
-    } else {
-      executor.execute(
-          () ->
-              responseListener.onClose(
-                  Status.fromThrowable(cause), Status.trailersFromThrowable(cause)));
-    }
+    executor.execute(
+        () -> {
+          if (cause instanceof ReadTimeoutException) {
+            responseListener.onClose(Status.DEADLINE_EXCEEDED, new Metadata());
+          } else {
+            responseListener.onClose(
+                Status.fromThrowable(cause), Status.trailersFromThrowable(cause));
+          }
+        });
 
     ctx.close();
   }
