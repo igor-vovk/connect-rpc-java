@@ -93,7 +93,8 @@ Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 
 ## Examples
 
-* Client-Server communication using Connect RPC protocol instead of GRPC: [link](https://github.com/igor-vovk/connect-rpc-java/tree/main/examples/client-server)
+* Client-Server communication using Connect RPC protocol: [link](https://github.com/igor-vovk/connect-rpc-java/tree/main/examples/client-server)
+* Starting both GRPC and Connect RPC servers: [link](https://github.com/igor-vovk/connect-rpc-java/tree/main/examples/dual-server)
 
 ## Development
 

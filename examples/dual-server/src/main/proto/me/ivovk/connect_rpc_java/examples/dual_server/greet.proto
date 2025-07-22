@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package me.ivovk.connect_rpc_java.examples.dual_server;
+
+option java_multiple_files = true;
+option java_package = "me.ivovk.connect_rpc_java.examples.dual_server.gen";
+
+message GreetRequest {
+  string name = 1;
+}
+
+message GreetResponse {
+  string greeting = 1;
+}
+
+service GreetService {
+  rpc Greet(GreetRequest) returns (GreetResponse);
+}
