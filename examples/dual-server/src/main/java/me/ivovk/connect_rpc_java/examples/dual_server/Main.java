@@ -2,6 +2,7 @@ package me.ivovk.connect_rpc_java.examples.dual_server;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
+import io.grpc.protobuf.services.ProtoReflectionServiceV1;
 import io.grpc.stub.StreamObserver;
 import me.ivovk.connect_rpc_java.examples.dual_server.gen.GreetRequest;
 import me.ivovk.connect_rpc_java.examples.dual_server.gen.GreetResponse;
@@ -24,7 +25,6 @@ public class Main {
   private static Server grpcServer;
 
   public static void main(String[] args) throws IOException, InterruptedException {
-    // Add shutdown hook to ensure proper cleanup
     Runtime.getRuntime()
         .addShutdownHook(
             new Thread(
@@ -33,15 +33,11 @@ public class Main {
                   stopServers();
                 }));
 
-    // Start ConnectRPC server
     startConnectRpcServer();
-
-    // Start traditional gRPC server
     startGrpcServer();
 
     logger.info("Both servers are running. Press Ctrl+C to stop.");
 
-    // Keep the application running
     try {
       Thread.currentThread().join();
     } catch (InterruptedException e) {
@@ -89,6 +85,7 @@ public class Main {
                     responseObserver.onCompleted();
                   }
                 })
+            .addService(ProtoReflectionServiceV1.newInstance())
             .build()
             .start();
 
@@ -96,7 +93,6 @@ public class Main {
   }
 
   private static void stopServers() {
-    // Stop ConnectRPC server
     if (connectRpcServer != null) {
       try {
         connectRpcServer.shutdown();
@@ -106,10 +102,10 @@ public class Main {
       }
     }
 
-    // Stop gRPC server
     if (grpcServer != null) {
       try {
         grpcServer.shutdown();
+
         if (!grpcServer.awaitTermination(5, TimeUnit.SECONDS)) {
           logger.warn("gRPC server did not terminate gracefully, forcing shutdown");
           grpcServer.shutdownNow();
@@ -117,6 +113,7 @@ public class Main {
             logger.error("gRPC server did not terminate");
           }
         }
+
         logger.info("gRPC server stopped");
       } catch (InterruptedException e) {
         logger.error("Error stopping gRPC server", e);

@@ -33,13 +33,6 @@ You can test the traditional gRPC server using grpcurl or any gRPC client:
 grpcurl -plaintext -d '{"name": "World"}' localhost:9090 me.ivovk.connect_rpc_java.examples.dual_server.GreetService/Greet
 ```
 
-## Key Features
-
-- **Dual Protocol Support**: Demonstrates running both ConnectRPC and traditional gRPC protocols side by side
-- **Proper Shutdown**: Implements shutdown hooks to ensure both servers are gracefully stopped
-- **Different Ports**: Shows how to configure different ports for each server type
-- **Logging**: Includes comprehensive logging to track server lifecycle and requests
-
 ## Use Cases
 
 This pattern is useful when you need to:

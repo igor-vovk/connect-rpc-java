@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.grpc.stub)
     implementation(libs.grpc.protobuf)
     implementation(libs.grpc.netty)
+    implementation(libs.grpc.services)
     implementation(libs.logback)
     implementation(libs.javax.annotation)
 }
