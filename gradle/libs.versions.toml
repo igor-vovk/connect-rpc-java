@@ -3,7 +3,7 @@
 
 [versions]
 grpc = "1.74.0"
-netty = "4.2.3.Final"
+netty = "4.2.4.Final"
 slf4j = "2.0.17"
 protobuf = "4.31.1"
 logback = "1.5.18"
