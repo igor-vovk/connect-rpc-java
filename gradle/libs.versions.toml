@@ -6,7 +6,7 @@ grpc = "1.75.0"
 netty = "4.2.6.Final"
 slf4j = "2.0.17"
 protobuf = "4.32.1"
-logback = "1.5.18"
+logback = "1.5.19"
 
 [libraries]
 grpc-core = { module = "io.grpc:grpc-core", version.ref = "grpc" }
