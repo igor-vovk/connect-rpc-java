@@ -2,7 +2,7 @@
 # https://docs.gradle.org/current/userguide/platforms.html#sub::toml-dependencies-format
 
 [versions]
-grpc = "1.75.0"
+grpc = "1.76.0"
 netty = "4.2.6.Final"
 slf4j = "2.0.17"
 protobuf = "4.32.1"
