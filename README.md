@@ -124,3 +124,4 @@ Diagnostic data from the server itself is written to the log file `out/out.log`.
 * [Connect RPC website](https://connectrpc.com)
 * [Connect RPC Java library](https://github.com/igor-vovk/connect-rpc-java/)
 * [Connect RPC Scala library](https://github.com/igor-vovk/connect-rpc-scala)
+* [Conformance Docker Image](https://github.com/igor-vovk/connect-conformance-dockerimage)
