@@ -5,7 +5,7 @@
 grpc = "1.78.0"
 netty = "4.2.9.Final"
 slf4j = "2.0.17"
-protobuf = "4.33.2"
+protobuf = "4.33.4"
 logback = "1.5.22"
 
 [libraries]
